@@ -1,0 +1,11 @@
+flowchart TB
+
+InventoryService
+InventoryService --> Domain
+InventoryService --> Application
+InventoryService --> Infrastructure
+Domain --> Model
+Domain --> Repository
+Application --> UseCases
+Infrastructure --> Controllers
+Infrastructure --> Persistence

@@ -1,0 +1,23 @@
+flowchart TB
+
+subgraph Domain
+    Entities
+    Repositories
+    DomainServices
+end
+
+subgraph Application
+    UseCases
+    DTOs
+    Mappers
+end
+
+subgraph Infrastructure
+    Controllers
+    Persistence
+    Security
+    Config
+end
+
+Infrastructure --> Application
+Application --> Domain

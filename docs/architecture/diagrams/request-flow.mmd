@@ -1,0 +1,20 @@
+sequenceDiagram
+
+actor User
+
+participant Controller
+participant UseCase
+participant Domain
+participant Repository
+participant PostgreSQL
+
+User->>Controller: POST /products (DTO)
+Controller->>UseCase: execute(command)
+UseCase->>Domain: createProduct(data)
+Domain-->>UseCase: product (Entity)
+UseCase->>Repository: save(product)
+Repository->>PostgreSQL: INSERT INTO products ...
+PostgreSQL-->>Repository: Result / OK
+Repository-->>UseCase: savedProduct
+UseCase-->>Controller: ProductResponseDTO
+Controller-->>User: 201 Created
