@@ -1,0 +1,105 @@
+version: "3.8"
+
+services:
+
+  # ==========================================================================
+  # 1. Base de Datos (PostgreSQL + pgvector)
+  # ==========================================================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: neuroinventory-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docs/architecture/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # 2. Identidad y Seguridad (Keycloak)
+  # ==========================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: neuroinventory-keycloak
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # 3. LLM Local y Embeddings (Ollama)
+  # ==========================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: neuroinventory-ollama
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # 4. AI Service (FastAPI)
+  # ==========================================================================
+  ai-service:
+    build: ./ai-service
+    container_name: neuroinventory-ai-service
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OLLAMA_HOST: ${OLLAMA_HOST}
+    ports:
+      - "${AI_SERVICE_PORT}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # 5. Inventory Service (Spring Boot Backend)
+  # ==========================================================================
+  inventory-service:
+    build: ./inventory-service
+    container_name: neuroinventory-inventory-service
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+    ports:
+      - "${INVENTORY_SERVICE_PORT}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - neuroinventory-net
+
+volumes:
+  postgres_data:
+  ollama_data:
+
+networks:
+  neuroinventory-net:
+    driver: bridge
