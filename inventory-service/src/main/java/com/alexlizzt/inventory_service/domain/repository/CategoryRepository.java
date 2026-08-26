@@ -10,5 +10,7 @@ public interface CategoryRepository {
     Category save(Category category);
     Optional<Category> findById(String id);
     Optional<Category> findByName(String name);
+    boolean existsByName(String name);
     PageResult<Category> findAllPaged(PageQuery pageQuery);
+    void deleteById(String id);
 }

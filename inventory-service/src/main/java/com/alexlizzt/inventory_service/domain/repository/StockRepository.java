@@ -10,4 +10,5 @@ public interface StockRepository {
     Stock save(Stock stock);
     Optional<Stock> findByProductId(String productId);
     PageResult<Stock> findLowStockPaged(PageQuery pageQuery);
+    PageResult<Stock> findAllPaged(PageQuery pageQuery);
 }
