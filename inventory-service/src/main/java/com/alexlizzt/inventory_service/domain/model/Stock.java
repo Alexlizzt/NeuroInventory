@@ -1,26 +1,39 @@
 package com.alexlizzt.inventory_service.domain.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@Builder(toBuilder = true)
 public class Stock {
     private String productId;
-    private int quantity;
-    private int minStock;
+    private Integer quantity;
+    private Integer minStock;
     private LocalDateTime updatedAt;
 
-    public void update(int quantity, int minStock, LocalDateTime updateTime) {
-        if (quantity < 0) {
-            throw new IllegalArgumentException("La cantidad en stock no puede ser negativa");
+    public void addQuantity(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount to add must be positive");
         }
-        this.quantity = quantity;
-        this.minStock = minStock;
-        this.updatedAt = updateTime;
+        this.quantity += amount;
+        this.updatedAt = LocalDateTime.now(ZoneOffset.UTC);
+    }
+
+    public void subtractQuantity(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount to subtract must be positive");
+        }
+        if (this.quantity < amount) {
+            throw new IllegalStateException("Insufficient stock for product: " + productId);
+        }
+        this.quantity -= amount;
+        this.updatedAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 }

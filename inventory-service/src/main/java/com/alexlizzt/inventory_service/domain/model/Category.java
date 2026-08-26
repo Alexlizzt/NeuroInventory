@@ -1,15 +1,18 @@
 package com.alexlizzt.inventory_service.domain.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@Builder(toBuilder = true)
 public class Category {
     private String id;
     private String name;
@@ -17,13 +20,13 @@ public class Category {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-
-    public void update(String name, String description, LocalDateTime updatedAt) {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("El nombre de la categoría es obligatorio");
+    public void updateDetails(String name, String description) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
         }
-        this.name = name;
-        this.description = description;
-        this.updatedAt = updatedAt;
+        if (description != null) {
+            this.description = description;
+        }
+        this.updatedAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 }

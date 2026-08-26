@@ -3,12 +3,14 @@ package com.alexlizzt.inventory_service.domain.model;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@Builder
 public class InventoryMovement {
 
     private String id;
@@ -19,23 +21,4 @@ public class InventoryMovement {
     private String userId;
     private LocalDateTime createdAt;
 
-    public static InventoryMovement create(
-            String id, 
-            String productId, 
-            MovementType type, 
-            int quantity, 
-            String reason, 
-            String userId, 
-            LocalDateTime createdAt) {
-        
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("La cantidad del movimiento debe ser mayor a cero");
-        }
-        
-        if (type == null) {
-            throw new IllegalArgumentException("El tipo de movimiento es obligatorio");
-        }
-
-        return new InventoryMovement(id, productId, type, quantity, reason, userId, createdAt);
-    }
 }
