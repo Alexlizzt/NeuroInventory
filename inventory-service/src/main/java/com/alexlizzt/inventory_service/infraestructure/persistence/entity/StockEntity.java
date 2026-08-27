@@ -1,6 +1,6 @@
 package com.alexlizzt.inventory_service.infraestructure.persistence.entity;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,5 +29,5 @@ public class StockEntity {
     private Integer minStock;
 
     @Column(name = "updated_at", insertable = false, updatable = false)
-    private OffsetDateTime updatedAt;
+    private LocalDateTime updatedAt;
 }

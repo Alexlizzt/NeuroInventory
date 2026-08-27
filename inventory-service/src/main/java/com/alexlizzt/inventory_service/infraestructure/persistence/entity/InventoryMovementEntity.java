@@ -1,6 +1,6 @@
 package com.alexlizzt.inventory_service.infraestructure.persistence.entity;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,5 +38,5 @@ public class InventoryMovementEntity {
     private String userId;
 
     @Column(name = "created_at", insertable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
 }

@@ -1,15 +1,14 @@
-package com.alexlizzt.inventory_service.infraestructure.persistence.entity;
+package com.alexlizzt.inventory_service.infraestructure.persistence.mapper;
 
 import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 import com.alexlizzt.inventory_service.domain.model.InventoryMovement;
-import com.alexlizzt.inventory_service.infraestructure.persistence.mapper.ProductEntityMapper;
+import com.alexlizzt.inventory_service.infraestructure.persistence.entity.InventoryMovementEntity;
 
-@Mapper(componentModel = "spring", uses = {ProductEntityMapper.class})
+@Mapper(componentModel = "spring")
 public interface InventoryMovementEntityMapper {
-    @Mapping(target = "product", source = "product")
+    
     InventoryMovement toDomain(InventoryMovementEntity entity);
 
     @InheritInverseConfiguration
