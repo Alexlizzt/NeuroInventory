@@ -2,8 +2,8 @@ package com.alexlizzt.inventory_service.domain.repository;
 
 import java.util.Optional;
 
-import com.alexlizzt.inventory_service.application.usecase.query.PageQuery;
-import com.alexlizzt.inventory_service.application.usecase.query.PageResult;
+import com.alexlizzt.inventory_service.application.query.PageQuery;
+import com.alexlizzt.inventory_service.application.query.PageResult;
 import com.alexlizzt.inventory_service.domain.model.Category;
 
 public interface CategoryRepository {

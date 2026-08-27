@@ -15,7 +15,7 @@ public class InventoryMovement {
 
     private String id;
     private String productId;
-    private MovementType type;
+    private String type;
     private int quantity;
     private String reason;
     private String userId;
