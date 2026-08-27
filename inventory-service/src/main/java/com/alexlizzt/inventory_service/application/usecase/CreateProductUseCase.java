@@ -1,70 +1,75 @@
 package com.alexlizzt.inventory_service.application.usecase;
 
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alexlizzt.inventory_service.application.command.CreateProductCommand;
+import com.alexlizzt.inventory_service.application.dto.response.ProductResponse;
+import com.alexlizzt.inventory_service.application.mapper.ProductDtoMapper;
 import com.alexlizzt.inventory_service.domain.model.Product;
 import com.alexlizzt.inventory_service.domain.model.Stock;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 import com.alexlizzt.inventory_service.domain.repository.StockRepository;
 
-import lombok.RequiredArgsConstructor;
-
-
 @Service
-@RequiredArgsConstructor
 public class CreateProductUseCase {
     
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final StockRepository stockRepository;
-    private final Clock clock;
+    private final ProductDtoMapper productDtoMapper;
+
+    public CreateProductUseCase(
+            ProductRepository productRepository,
+            CategoryRepository categoryRepository,
+            StockRepository stockRepository,
+            ProductDtoMapper productDtoMapper) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.stockRepository = stockRepository;
+        this.productDtoMapper = productDtoMapper;
+    }
 
     @Transactional
-    public Product execute(String categoryId, String sku, String name, String description, BigDecimal price, int initialStock, int minStock) {
+    public ProductResponse execute(CreateProductCommand command) {
         // 1. Validar que la categoría exista
-        categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalArgumentException("La categoría con ID " + categoryId + " no existe"));
-
-        // 2. Validar que el SKU no esté duplicado
-        if (productRepository.findBySku(sku).isPresent()) {
-            throw new IllegalArgumentException("Ya existe un producto con el SKU: " + sku);
+        if (!categoryRepository.findById(command.categoryId()).isPresent()) {
+            throw new IllegalArgumentException("Category not found with ID: " + command.categoryId());
         }
 
-        LocalDateTime now = LocalDateTime.now(clock);
+        // 2. Validar unicidad de SKU
+        if (productRepository.existsBySku(command.sku())) {
+            throw new IllegalArgumentException("Product with SKU '" + command.sku() + "' already exists.");
+        }
+
         String productId = UUID.randomUUID().toString();
 
-        // 3. Crear la entidad de dominio Product
-        Product product = new Product(
-                productId,
-                categoryId,
-                sku,
-                name,
-                description,
-                price,
-                true, // active por defecto
-                now,
-                now
-        );
+        // 3. Crear y guardar el producto
+        Product product = Product.builder()
+                .id(productId)
+                .categoryId(command.categoryId())
+                .sku(command.sku())
+                .name(command.name())
+                .description(command.description())
+                .price(command.price())
+                .active(true)
+                .build();
 
-        // 4. Crear su respectivo Stock inicial
-        Stock stock = new Stock(
-                productId,
-                initialStock,
-                minStock,
-                now
-        );
-
-        // 5. Guardar ambos utilizando los repositorios del dominio
         Product savedProduct = productRepository.save(product);
-        stockRepository.save(stock);
 
-        return savedProduct;
+        // 4. Inicializar el registro de Stock correspondiente
+        Stock initialStock = Stock.builder()
+                .productId(productId)
+                .quantity(command.initialStock())
+                .minStock(command.minStock())
+                .build();
+
+        stockRepository.save(initialStock);
+
+        // 5. Retornar DTO de Respuesta
+        return productDtoMapper.toResponse(savedProduct);
     }
 }

@@ -3,21 +3,30 @@ package com.alexlizzt.inventory_service.application.usecase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alexlizzt.inventory_service.application.dto.response.StockResponse;
 import com.alexlizzt.inventory_service.domain.model.Stock;
 import com.alexlizzt.inventory_service.domain.repository.StockRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class GetStockByProductUseCase {
 
     private final StockRepository stockRepository;
 
+    public GetStockByProductUseCase(StockRepository stockRepository) {
+        this.stockRepository = stockRepository;
+    }
+
     @Transactional(readOnly = true)
-    public Stock execute(String productId) {
-        // Consulta el stock utilizando el repositorio y valida su existencia
-        return stockRepository.findByProductId(productId)
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró información de stock para el producto con ID: " + productId));
+    public StockResponse execute(String productId) {
+        Stock stock = stockRepository.findByProductId(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Stock not found for product ID: " + productId));
+
+        return new StockResponse(
+                stock.getProductId(),
+                stock.getQuantity(),
+                stock.getMinStock(),
+                stock.isLowStock(),
+                stock.getUpdatedAt()
+                );
     }
 }

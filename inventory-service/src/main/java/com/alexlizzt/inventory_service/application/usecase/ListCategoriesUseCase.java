@@ -3,8 +3,8 @@ package com.alexlizzt.inventory_service.application.usecase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alexlizzt.inventory_service.application.usecase.query.PageQuery;
-import com.alexlizzt.inventory_service.application.usecase.query.PageResult;
+import com.alexlizzt.inventory_service.application.query.PageQuery;
+import com.alexlizzt.inventory_service.application.query.PageResult;
 import com.alexlizzt.inventory_service.domain.model.Category;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 

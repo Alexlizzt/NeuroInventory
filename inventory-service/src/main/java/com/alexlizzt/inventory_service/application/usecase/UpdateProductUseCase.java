@@ -1,44 +1,40 @@
 package com.alexlizzt.inventory_service.application.usecase;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alexlizzt.inventory_service.application.usecase.command.UpdateProductCommand;
+import com.alexlizzt.inventory_service.application.dto.response.ProductResponse;
+import com.alexlizzt.inventory_service.application.mapper.ProductDtoMapper;
+import com.alexlizzt.inventory_service.application.command.UpdateProductCommand;
 import com.alexlizzt.inventory_service.domain.model.Product;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class UpdateProductUseCase {
 
-    private final Clock clock;
     private final ProductRepository productRepository;
+    private final ProductDtoMapper productDtoMapper;
+
+    public UpdateProductUseCase(ProductRepository productRepository, ProductDtoMapper productDtoMapper) {
+        this.productRepository = productRepository;
+        this.productDtoMapper = productDtoMapper;
+    }
 
     @Transactional
-    public Product execute(UpdateProductCommand command) {
-        // 1. Buscar si el producto existe en el dominio
+    public ProductResponse execute(UpdateProductCommand command) {
         Product existingProduct = productRepository.findById(command.id())
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + command.id()));
+                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + command.id()));
 
-        // 2. Obtener la hora segura con el clock
-        LocalDateTime now = LocalDateTime.now(clock);
-        
-        // 3. Actualizar los campos del producto (puedes tener un método en la entidad Product o hacerlo aquí)
-        existingProduct.update(
-                command.categoryId(),
-                command.name(),
-                command.description(),
-                command.price(),
-                command.active(),
-                now
+        // Delegamos la mutación al método explícito de la entidad de dominio
+        existingProduct.updateDetails(
+            command.name(),
+            command.description(),
+            command.price(),
+            command.categoryId(),
+            command.active()
         );
 
-        // 3. Persistir los cambios
-        return productRepository.save(existingProduct);
-    }                
+        Product updatedProduct = productRepository.save(existingProduct);
+        return productDtoMapper.toResponse(updatedProduct);
+    } 
 }

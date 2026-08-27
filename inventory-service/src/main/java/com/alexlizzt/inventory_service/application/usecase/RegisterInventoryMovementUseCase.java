@@ -1,72 +1,80 @@
 package com.alexlizzt.inventory_service.application.usecase;
 
-import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alexlizzt.inventory_service.application.usecase.command.RegisterInventoryMovementCommand;
+import com.alexlizzt.inventory_service.application.command.RegisterInventoryMovementCommand;
+import com.alexlizzt.inventory_service.application.dto.response.InventoryMovementResponse;
+import com.alexlizzt.inventory_service.application.mapper.InventoryMovementDtoMapper;
 import com.alexlizzt.inventory_service.domain.model.InventoryMovement;
 import com.alexlizzt.inventory_service.domain.model.Stock;
 import com.alexlizzt.inventory_service.domain.repository.InventoryMovementRepository;
+import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 import com.alexlizzt.inventory_service.domain.repository.StockRepository;
 
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class RegisterInventoryMovementUseCase {
 
-    private final Clock clock;
     private final InventoryMovementRepository movementRepository;
     private final StockRepository stockRepository;
+    private final ProductRepository productRepository;
+    private final InventoryMovementDtoMapper movementDtoMapper;
+
+    public RegisterInventoryMovementUseCase(
+            InventoryMovementRepository movementRepository,
+            StockRepository stockRepository,
+            ProductRepository productRepository,
+            InventoryMovementDtoMapper movementDtoMapper) {
+        this.movementRepository = movementRepository;
+        this.stockRepository = stockRepository;
+        this.productRepository = productRepository;
+        this.movementDtoMapper = movementDtoMapper;
+    }
 
     @Transactional
-    public InventoryMovement execute(RegisterInventoryMovementCommand command) {
-        // 1. Buscar el stock actual del producto
-        Stock stock = stockRepository.findByProductId(command.productId())
-                .orElseThrow(() -> new IllegalArgumentException("No se encontró stock para el producto con ID: " + command.productId()));
-
-        // 2. Calcular la nueva cantidad según el tipo de movimiento y obtener la hora segura con el clock
-        int currentQuantity = stock.getQuantity();
-        int newQuantity;
-        LocalDateTime now = LocalDateTime.now(clock);
-
-        switch (command.type()) {
-            case IN:
-                newQuantity = currentQuantity + command.quantity();
-                break;
-            case OUT:
-                newQuantity = currentQuantity - command.quantity();
-                if (newQuantity < 0) {
-                    throw new IllegalArgumentException("Stock insuficiente. Cantidad actual: " + currentQuantity + ", solicitada: " + command.quantity());
-                }
-                break;
-            case ADJUSTMENT:
-                // En un ajuste, la cantidad reportada representa el nuevo stock absoluto o el valor directo
-                newQuantity = command.quantity(); 
-                break;
-            default:
-                throw new IllegalArgumentException("Tipo de movimiento no soportado: " + command.type());
+    public InventoryMovementResponse execute(RegisterInventoryMovementCommand command) {
+        // 1. Validar existencia del producto
+        if (!productRepository.findById(command.productId()).isPresent()) {
+            throw new IllegalArgumentException("Product not found with id: " + command.productId());
         }
 
-        // 3. Actualizar el stock utilizando el método de dominio
-        stock.update(newQuantity, stock.getMinStock(), now);
+        // 2. Obtener y actualizar el Stock en el dominio
+        Stock stock = stockRepository.findByProductId(command.productId())
+                .orElseThrow(() -> new IllegalArgumentException("Stock record not found for product: " + command.productId()));
+
+        switch (command.type().toUpperCase()) {
+            case "IN" -> stock.addQuantity(command.quantity());
+            case "OUT" -> stock.removeQuantity(command.quantity()); // Arroja IllegalStateException si es insuficiente
+            case "ADJUSTMENT" -> {
+                // En un ajuste se asigna o recalcula según la lógica del negocio
+                if (command.quantity() < 0) {
+                    stock.removeQuantity(Math.abs(command.quantity()));
+                } else {
+                    stock.addQuantity(command.quantity());
+                }
+            }
+            default -> throw new IllegalArgumentException("Invalid movement type: " + command.type());
+        }
+
+        // Guardar el stock actualizado
         stockRepository.save(stock);
 
-        // 4. Crear y registrar el movimiento histórico de inventario
-        InventoryMovement movement = InventoryMovement.create(
-                UUID.randomUUID().toString(),
-                command.productId(),
-                command.type(),
-                command.quantity(),
-                command.reason(),
-                command.userId(),
-                now
-        );
-
-        return movementRepository.save(movement);
+        // 3. Crear y guardar el registro de movimiento
+        InventoryMovement movement = InventoryMovement.builder()
+                .id(UUID.randomUUID().toString())
+                .productId(command.productId())
+                .type(command.type().toUpperCase())
+                .quantity(command.quantity())
+                .reason(command.reason())
+                .userId(command.userId())
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
+        InventoryMovement savedMovement = movementRepository.save(movement);
+        return movementDtoMapper.toResponse(savedMovement);
     }
 }
