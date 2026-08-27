@@ -41,13 +41,15 @@ public class SearchProductsSemanticallyUseCase {
         }
 
         // 2. Extraer los IDs de los productos encontrados
+        @SuppressWarnings("null")
         List<String> productIds = matches.stream()
                 .map(SemanticMatch::getProductId)
                 .toList();
 
         // 3. Consultar en la base de datos relacional la información completa de esos productos
         List<Product> products = productRepository.findAllByIds(productIds);
-
+        
+        @SuppressWarnings("null")
         Map<String, Product> productMap = products.stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
 
