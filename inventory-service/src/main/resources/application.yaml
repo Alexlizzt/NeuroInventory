@@ -5,6 +5,14 @@ ollama:
   host: ${OLLAMA_HOST:localhost}
   port: ${OLLAMA_PORT:11434}
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+
 spring:
   application:
     name: inventory-service
@@ -29,11 +37,11 @@ spring:
     enabled: true         # Habilita Flyway para gestionar los scripts SQL
     baseline-on-migrate: true # Permite que Flyway cree una línea base si la BD ya tiene datos
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
+ # security:
+ #   oauth2:
+ #     resourceserver:
+ #       jwt:
+ #         issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI}
 
 management:
   endpoints:
