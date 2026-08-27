@@ -1,4 +1,4 @@
-package com.alexlizzt.inventory_service.application.usecase.command;
+package com.alexlizzt.inventory_service.application.command;
 
 public record UpdateCategoryCommand(
     String id,

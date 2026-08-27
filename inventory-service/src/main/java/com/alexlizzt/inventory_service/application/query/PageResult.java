@@ -1,4 +1,4 @@
-package com.alexlizzt.inventory_service.application.usecase.query;
+package com.alexlizzt.inventory_service.application.query;
 
 import java.util.List;
 
