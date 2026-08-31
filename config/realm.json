@@ -1,0 +1,105 @@
+{
+  "realm": "neuroinventory",
+  "enabled": true,
+  "registrationAllowed": true,
+  "rememberMe": true,
+  "clients": [
+    {
+      "clientId": "frontend-client",
+      "description": "Client for the frontend application",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": ["+"],
+      "baseUrl": "http://localhost:3000",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false
+    },
+    {
+      "clientId": "api-client",
+      "description": "Client for the API",
+      "publicClient": false,
+      "protocol": "openid-connect", 
+      "serviceAccountsEnabled": true,
+      "secret": "api-client-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "authorizationServicesEnabled": true
+    },
+    {
+      "clientId": "mobile-client",
+      "description": "Client for the mobile application",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "myapp://callback"
+      ],
+      "webOrigins": [],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_ADMIN",
+        "description": "Regular admin with full set of permissions"
+      },
+      {
+        "name": "ROLE_USER",
+        "description": "Basic user with limited permissions"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "Admins",
+      "realmRoles": ["ROLE_ADMIN"]
+    },
+    {
+      "name": "Users",
+      "realmRoles": ["ROLE_USER"]
+    }
+  ],
+  "users": [
+    {
+      "username": "testadmin",
+      "email": "testadmin@mail.com",
+      "enabled": true,
+      "firstName": "Test",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "Admins"
+      ]
+    },
+    {
+      "username": "testuser",
+      "email": "testuser@mail.com",
+      "enabled": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user123",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "Users"
+      ]
+    }
+  ]
+}
