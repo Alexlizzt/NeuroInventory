@@ -3,6 +3,8 @@ package com.alexlizzt.inventory_service.domain.model;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+import com.alexlizzt.inventory_service.domain.exception.InsufficientStockException;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,7 +35,7 @@ public class Stock {
      */
     public void addQuantity(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount to add must be greater than zero.");
+            throw new InsufficientStockException(productId);
         }
         this.quantity = (this.quantity == null ? 0 : this.quantity) + amount;
         this.updatedAt = LocalDateTime.now(ZoneOffset.UTC);
@@ -44,11 +46,11 @@ public class Stock {
      */
     public void removeQuantity(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount to remove must be greater than zero.");
+            throw new InsufficientStockException(productId);
         }
         int current = (this.quantity == null ? 0 : this.quantity);
         if (current < amount) {
-            throw new IllegalStateException("Insufficient stock. Current: " + current + ", Requested: " + amount);
+            throw new InsufficientStockException(productId);
         }
         this.quantity = current - amount;
         this.updatedAt = LocalDateTime.now(ZoneOffset.UTC);
