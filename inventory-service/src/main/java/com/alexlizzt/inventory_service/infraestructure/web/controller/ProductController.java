@@ -28,7 +28,7 @@ import com.alexlizzt.inventory_service.infraestructure.web.dto.request.CreatePro
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/products")
+@RequestMapping("/products")
 public class ProductController {
     private final CreateProductUseCase createProductUseCase;
     private final FindProductUseCase findProductUseCase;

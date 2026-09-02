@@ -26,7 +26,7 @@ import com.alexlizzt.inventory_service.infraestructure.web.dto.request.RegisterM
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/inventory")
+@RequestMapping("/inventory")
 public class InventoryController {
 
     private final RegisterInventoryMovementUseCase registerMovementUseCase;

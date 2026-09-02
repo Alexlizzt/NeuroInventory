@@ -1,16 +1,23 @@
 #!/bin/bash
 set -e
 
-echo "Creating Keycloak database..."
+echo "Checking Keycloak database..."
 
 KEYCLOAK_DB="${KEYCLOAK_DB:-keycloak}"
 
-psql -v ON_ERROR_STOP=1 \
-    --username "$POSTGRES_USER" \
-    --dbname "postgres" \
-    -c "CREATE DATABASE \"$KEYCLOAK_DB\";"
+# Verificar si la base de datos ya existe antes de crearla
+DB_EXISTS=$(psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" -tAc "SELECT 1 FROM pg_database WHERE datname='$KEYCLOAK_DB'")
 
-echo "Keycloak database ready."
+if [ "$DB_EXISTS" = "1" ]; then
+    echo "Keycloak database already exists."
+else
+    echo "Creating Keycloak database..."
+    psql -v ON_ERROR_STOP=1 \
+        --username "$POSTGRES_USER" \
+        --dbname "postgres" \
+        -c "CREATE DATABASE \"$KEYCLOAK_DB\";"
+    echo "Keycloak database created successfully."
+fi
 
 echo "Initializing NeuroInventory database..."
 

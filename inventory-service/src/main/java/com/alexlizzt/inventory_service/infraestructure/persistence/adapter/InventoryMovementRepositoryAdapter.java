@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
 
 import com.alexlizzt.inventory_service.application.query.PageQuery;
 import com.alexlizzt.inventory_service.application.query.PageResult;
@@ -15,6 +16,7 @@ import com.alexlizzt.inventory_service.infraestructure.persistence.entity.Invent
 import com.alexlizzt.inventory_service.infraestructure.persistence.mapper.InventoryMovementEntityMapper;
 import com.alexlizzt.inventory_service.infraestructure.persistence.springdata.InventoryMovementJpaRepository;
 
+@Repository
 public class InventoryMovementRepositoryAdapter implements InventoryMovementRepository {
 
     private final InventoryMovementJpaRepository movementJpaRepository;
