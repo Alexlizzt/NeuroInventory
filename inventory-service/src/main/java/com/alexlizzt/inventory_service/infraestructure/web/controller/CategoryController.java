@@ -1,0 +1,85 @@
+package com.alexlizzt.inventory_service.infraestructure.web.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
+import com.alexlizzt.inventory_service.application.usecase.ListCategoriesUseCase;
+
+import com.alexlizzt.inventory_service.application.command.CreateCategoryCommand;
+import com.alexlizzt.inventory_service.application.dto.request.CreateCategoryRequest;
+import com.alexlizzt.inventory_service.application.dto.response.CategoryResponse;
+import com.alexlizzt.inventory_service.application.query.PageQuery;
+import com.alexlizzt.inventory_service.application.query.PageResult;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/categories")
+@Tag(name = "Categorías", description = "Endpoints para la gestión y consulta de categorías de productos")
+public class CategoryController {
+
+    private final CreateCategoryUseCase createCategoryUseCase;
+    private final ListCategoriesUseCase getCategoriesUseCase;
+
+    public CategoryController(
+            CreateCategoryUseCase createCategoryUseCase,
+            ListCategoriesUseCase getCategoriesUseCase) {
+        this.createCategoryUseCase = createCategoryUseCase;
+        this.getCategoriesUseCase = getCategoriesUseCase;
+    }
+
+    @PostMapping
+    @Operation(summary = "Crear una nueva categoría", description = "Registra una nueva categoría en el sistema asegurando unicidad en el nombre.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Categoría creada exitosamente",
+            content = @Content(schema = @Schema(implementation = CategoryResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o la categoría ya existe",
+            content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
+    public ResponseEntity<CategoryResponse> createCategory(
+            @Valid @RequestBody CreateCategoryRequest request) {
+        var command = new CreateCategoryCommand(request.name(), request.description());
+        CategoryResponse response = createCategoryUseCase.execute(command);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    @Operation(summary = "Obtener categorías paginadas", description = "Recupera una lista paginada de categorías registradas.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Listado de categorías obtenido correctamente",
+            content = @Content(schema = @Schema(implementation = PageResult.class))),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
+    
+    public ResponseEntity<PageResult<CategoryResponse>> getCategories(
+            @Parameter(description = "Número de página (inicia en 0)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Tamaño de la página", example = "10")
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Campo por el cual ordenar", example = "name")
+            @RequestParam(defaultValue = "name") String sortBy,
+            @Parameter(description = "Dirección de ordenamiento (ASC o DESC)", example = "ASC")
+            @RequestParam(defaultValue = "ASC") String direction) {
+        
+        var query = new PageQuery(page, size, sortBy, direction);
+        PageResult<CategoryResponse> response = getCategoriesUseCase.execute(query);
+        return ResponseEntity.ok(response);
+    }
+}

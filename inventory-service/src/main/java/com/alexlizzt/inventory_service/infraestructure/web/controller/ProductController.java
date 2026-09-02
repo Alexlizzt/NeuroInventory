@@ -25,10 +25,19 @@ import com.alexlizzt.inventory_service.application.usecase.ListProductsUseCase;
 import com.alexlizzt.inventory_service.application.usecase.SearchProductsSemanticallyUseCase;
 import com.alexlizzt.inventory_service.infraestructure.web.dto.request.CreateProductRequest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/products")
+@Tag(name = "Productos", description = "Endpoints para el catálogo de productos y búsqueda semántica respaldada por IA")
 public class ProductController {
     private final CreateProductUseCase createProductUseCase;
     private final FindProductUseCase findProductUseCase;
@@ -50,6 +59,15 @@ public class ProductController {
     }
 
     @PostMapping
+    @Operation(summary = "Crear un nuevo producto", description = "Crea un producto en el catálogo e inicializa su registro de stock correspondiente.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Producto creado exitosamente",
+            content = @Content(schema = @Schema(implementation = ProductResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Petición inválida, SKU duplicado o categoría inexistente",
+            content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest request) {
         var command = new CreateProductCommand(
             request.categoryId(),
@@ -65,19 +83,59 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @Operation( summary = "Obtener un producto por ID", description = "Obtiene la información de un producto a partir de su identificador.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Producto encontrado exitosamente",
+        content = @Content(schema = @Schema(implementation = ProductResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado",
+        content = @Content),
+        @ApiResponse(responseCode = "400", description = "El ID proporcionado no es válido",
+        content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+        content = @Content
+        )
+    })
     public ResponseEntity<ProductResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(findProductUseCase.execute(id));
     }
 
     @GetMapping
-    public ResponseEntity<PageResult<ProductResponse>> listPaged(
+    @Operation(summary = "Listar productos paginados", description = "Retorna una página de productos ordenados según los parámetros provistos.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista paginada de productos",
+            content = @Content(schema = @Schema(implementation = PageResult.class))),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor",
+            content = @Content)
+    })
+    public ResponseEntity<PageResult<ProductResponse>> getProducts(
+            @Parameter(description = "Número de página (inicia en 0)", example = "0")
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        var pageQuery = new PageQuery(page, size);
-        return ResponseEntity.ok(listProductsUseCase.execute(pageQuery));
+            @Parameter(description = "Tamaño de la página", example = "10")
+            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Campo por el cual ordenar", example = "name")
+            @RequestParam(defaultValue = "name") String sortBy,
+            @Parameter(description = "Dirección de ordenamiento (ASC o DESC)", example = "ASC")
+            @RequestParam(defaultValue = "ASC") String direction) {
+        
+        var query = new PageQuery(page, size, sortBy, direction);
+        PageResult<ProductResponse> response = listProductsUseCase.execute(query);
+        return ResponseEntity.ok(response);
     }
 
+
     @GetMapping("/search/semantic")
+    @Operation(
+        summary = "Búsqueda semántica de productos vía IA",
+        description = "Consulta la API externa de FastAPI (búsqueda vectorial) para recuperar coincidencias conceptuales y enriquecer los datos desde la BD relacional."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Coincidencias semánticas encontradas",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = SemanticSearchProductResponse.class)))),
+        @ApiResponse(responseCode = "400", description = "Parámetros de consulta vacíos o inválidos",
+            content = @Content),
+        @ApiResponse(responseCode = "503", description = "Servicio externo de IA (FastAPI) no disponible",
+            content = @Content)
+    })
     public ResponseEntity<List<SemanticSearchProductResponse>> searchSemantically(
             @RequestParam String query,
             @RequestParam(defaultValue = "5") int limit) {
@@ -85,6 +143,12 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar un producto", description = "Elimina un producto del catálogo dado su ID de recurso.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Producto eliminado exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content)
+    })
     public ResponseEntity<Void> delete(@PathVariable String id) {
         deleteProductUseCase.execute(id);
         return ResponseEntity.noContent().build();
