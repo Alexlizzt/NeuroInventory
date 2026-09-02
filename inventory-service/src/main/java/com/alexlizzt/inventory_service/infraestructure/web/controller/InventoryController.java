@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,6 +54,7 @@ public class InventoryController {
     }
 
     @PostMapping("/movements")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(
         summary = "Registrar un movimiento de inventario",
         description = "Aplica una entrada (IN) o salida (OUT) de mercancía, actualizando el saldo de stock disponible e inmutando la transacción en el historial."
@@ -82,6 +84,7 @@ public class InventoryController {
 
     
     @GetMapping("/stock/{productId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Obtener el stock de un producto", description = "Consulta la disponibilidad de inventario actual y el indicador de stock bajo de un producto específico.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Stock recuperado exitosamente",
@@ -96,6 +99,7 @@ public class InventoryController {
     }
 
     @GetMapping("/stock/low")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Listar productos con stock bajo", description = "Retorna una página con los registros de inventario cuya cantidad actual es menor o igual al stock mínimo configurado.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Listado de productos con bajo nivel de inventario",
@@ -111,6 +115,7 @@ public class InventoryController {
     }
 
     @GetMapping("/movements/history/{productId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Consultar historial de movimientos (Kardex)", description = "Obtiene la lista paginada y ordenada cronológicamente de todas las entradas y salidas de inventario.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Página de historial de movimientos obtenida correctamente",

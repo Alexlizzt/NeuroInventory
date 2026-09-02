@@ -2,6 +2,7 @@ package com.alexlizzt.inventory_service.infraestructure.web.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +44,7 @@ public class CategoryController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Crear una nueva categoría", description = "Registra una nueva categoría en el sistema asegurando unicidad en el nombre.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Categoría creada exitosamente",
@@ -60,6 +62,7 @@ public class CategoryController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Obtener categorías paginadas", description = "Recupera una lista paginada de categorías registradas.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Listado de categorías obtenido correctamente",
@@ -67,7 +70,6 @@ public class CategoryController {
         @ApiResponse(responseCode = "500", description = "Error interno del servidor",
             content = @Content)
     })
-    
     public ResponseEntity<PageResult<CategoryResponse>> getCategories(
             @Parameter(description = "Número de página (inicia en 0)", example = "0")
             @RequestParam(defaultValue = "0") int page,

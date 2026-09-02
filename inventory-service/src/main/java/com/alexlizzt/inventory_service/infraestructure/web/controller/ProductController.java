@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,6 +60,7 @@ public class ProductController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Crear un nuevo producto", description = "Crea un producto en el catálogo e inicializa su registro de stock correspondiente.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Producto creado exitosamente",
@@ -83,6 +85,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation( summary = "Obtener un producto por ID", description = "Obtiene la información de un producto a partir de su identificador.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Producto encontrado exitosamente",
@@ -100,6 +103,7 @@ public class ProductController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Listar productos paginados", description = "Retorna una página de productos ordenados según los parámetros provistos.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lista paginada de productos",
@@ -124,6 +128,7 @@ public class ProductController {
 
 
     @GetMapping("/search/semantic")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(
         summary = "Búsqueda semántica de productos vía IA",
         description = "Consulta la API externa de FastAPI (búsqueda vectorial) para recuperar coincidencias conceptuales y enriquecer los datos desde la BD relacional."
@@ -143,6 +148,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Eliminar un producto", description = "Elimina un producto del catálogo dado su ID de recurso.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Producto eliminado exitosamente"),

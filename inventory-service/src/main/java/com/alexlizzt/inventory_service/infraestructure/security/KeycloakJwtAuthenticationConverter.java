@@ -26,7 +26,9 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
             @SuppressWarnings("unchecked")
             List<String> roles = (List<String>) realmAccess.get("roles");
             List<GrantedAuthority> realmRoles = roles.stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                    // Si ya viene como 'ROLE_ADMIN', se deja tal cual; si no, se prefija.
+                    .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                    .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
             authorities.addAll(realmRoles);
         }
