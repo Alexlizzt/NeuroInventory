@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alexlizzt.inventory_service.application.command.CreateCategoryCommand;
 import com.alexlizzt.inventory_service.application.dto.response.CategoryResponse;
 import com.alexlizzt.inventory_service.application.mapper.CategoryDtoMapper;
+import com.alexlizzt.inventory_service.domain.exception.DuplicateCategoryNameException;
 import com.alexlizzt.inventory_service.domain.model.Category;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 
@@ -26,7 +27,7 @@ public class CreateCategoryUseCase {
     @Transactional
     public CategoryResponse execute(CreateCategoryCommand command) {
         if (categoryRepository.existsByName(command.name())) {
-            throw new IllegalArgumentException("Category with name '" + command.name() + "' already exists.");
+            throw new DuplicateCategoryNameException(command.name());
         }
 
         Category category = Category.builder()

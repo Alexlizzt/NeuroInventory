@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.alexlizzt.inventory_service.application.dto.response.ProductResponse;
 import com.alexlizzt.inventory_service.application.mapper.ProductDtoMapper;
+import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 
 @Service
@@ -22,6 +23,6 @@ public class FindProductUseCase {
     public ProductResponse execute(String id) {
         return productRepository.findById(id)
                 .map(productDtoMapper::toResponse)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + id));
+                .orElseThrow(() -> new ProductNotFoundException(id));
     }
 }

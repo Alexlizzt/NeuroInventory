@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alexlizzt.inventory_service.application.dto.response.ProductResponse;
 import com.alexlizzt.inventory_service.application.mapper.ProductDtoMapper;
 import com.alexlizzt.inventory_service.application.command.UpdateProductCommand;
+import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.model.Product;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 
@@ -23,7 +24,7 @@ public class UpdateProductUseCase {
     @Transactional
     public ProductResponse execute(UpdateProductCommand command) {
         Product existingProduct = productRepository.findById(command.id())
-                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + command.id()));
+                .orElseThrow(() -> new ProductNotFoundException(command.id()));
 
         // Delegamos la mutación al método explícito de la entidad de dominio
         existingProduct.updateDetails(

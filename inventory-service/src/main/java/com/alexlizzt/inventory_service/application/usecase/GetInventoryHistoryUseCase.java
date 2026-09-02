@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.alexlizzt.inventory_service.application.dto.response.InventoryMovementResponse;
 import com.alexlizzt.inventory_service.application.mapper.InventoryMovementDtoMapper;
+import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.repository.InventoryMovementRepository;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 
@@ -28,7 +29,7 @@ public class GetInventoryHistoryUseCase {
     @Transactional(readOnly = true)
     public List<InventoryMovementResponse> execute(String productId) {
         if (!productRepository.findById(productId).isPresent()) {
-            throw new IllegalArgumentException("Product not found with id: " + productId);
+            throw new ProductNotFoundException(productId);
         }
 
         return movementRepository.findByProductId(productId).stream()

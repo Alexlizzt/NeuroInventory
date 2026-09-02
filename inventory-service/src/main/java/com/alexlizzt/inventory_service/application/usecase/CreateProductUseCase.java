@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alexlizzt.inventory_service.application.command.CreateProductCommand;
 import com.alexlizzt.inventory_service.application.dto.response.ProductResponse;
 import com.alexlizzt.inventory_service.application.mapper.ProductDtoMapper;
+import com.alexlizzt.inventory_service.domain.exception.CategoryNotFoundException;
+import com.alexlizzt.inventory_service.domain.exception.DuplicateSkuException;
 import com.alexlizzt.inventory_service.domain.model.Product;
 import com.alexlizzt.inventory_service.domain.model.Stock;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
@@ -37,12 +39,12 @@ public class CreateProductUseCase {
     public ProductResponse execute(CreateProductCommand command) {
         // 1. Validar que la categoría exista
         if (!categoryRepository.findById(command.categoryId()).isPresent()) {
-            throw new IllegalArgumentException("Category not found with ID: " + command.categoryId());
+            throw new CategoryNotFoundException(command.categoryId());
         }
 
         // 2. Validar unicidad de SKU
         if (productRepository.existsBySku(command.sku())) {
-            throw new IllegalArgumentException("Product with SKU '" + command.sku() + "' already exists.");
+            throw new DuplicateSkuException(command.sku());
         }
 
         String productId = UUID.randomUUID().toString();

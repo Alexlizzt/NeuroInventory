@@ -3,6 +3,7 @@ package com.alexlizzt.inventory_service.application.usecase;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 
 @Service
@@ -17,7 +18,7 @@ public class DeleteProductUseCase {
     @Transactional
     public void execute(String id) {
         if (!productRepository.findById(id).isPresent()) {
-            throw new IllegalArgumentException("Product not found with id: " + id);
+            throw new ProductNotFoundException(id);
         }
 
         productRepository.deleteById(id);

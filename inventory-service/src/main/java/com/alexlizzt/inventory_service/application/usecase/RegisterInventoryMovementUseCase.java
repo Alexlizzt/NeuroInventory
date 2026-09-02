@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.alexlizzt.inventory_service.application.command.RegisterInventoryMovementCommand;
 import com.alexlizzt.inventory_service.application.dto.response.InventoryMovementResponse;
 import com.alexlizzt.inventory_service.application.mapper.InventoryMovementDtoMapper;
+import com.alexlizzt.inventory_service.domain.exception.InvalidInventoryMovementTypeException;
+import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
+import com.alexlizzt.inventory_service.domain.exception.StockNotFoundException;
 import com.alexlizzt.inventory_service.domain.model.InventoryMovement;
 import com.alexlizzt.inventory_service.domain.model.Stock;
 import com.alexlizzt.inventory_service.domain.repository.InventoryMovementRepository;
@@ -40,16 +43,16 @@ public class RegisterInventoryMovementUseCase {
     public InventoryMovementResponse execute(RegisterInventoryMovementCommand command) {
         // 1. Validar existencia del producto
         if (!productRepository.findById(command.productId()).isPresent()) {
-            throw new IllegalArgumentException("Product not found with id: " + command.productId());
+            throw new ProductNotFoundException(command.productId());
         }
 
         // 2. Obtener y actualizar el Stock en el dominio
         Stock stock = stockRepository.findByProductId(command.productId())
-                .orElseThrow(() -> new IllegalArgumentException("Stock record not found for product: " + command.productId()));
+                .orElseThrow(() -> new StockNotFoundException(command.productId()));
 
         switch (command.type().toUpperCase()) {
             case "IN" -> stock.addQuantity(command.quantity());
-            case "OUT" -> stock.removeQuantity(command.quantity()); // Arroja IllegalStateException si es insuficiente
+            case "OUT" -> stock.removeQuantity(command.quantity());
             case "ADJUSTMENT" -> {
                 // En un ajuste se asigna o recalcula según la lógica del negocio
                 if (command.quantity() < 0) {
@@ -58,7 +61,7 @@ public class RegisterInventoryMovementUseCase {
                     stock.addQuantity(command.quantity());
                 }
             }
-            default -> throw new IllegalArgumentException("Invalid movement type: " + command.type());
+            default -> throw new InvalidInventoryMovementTypeException(command.type());
         }
 
         // Guardar el stock actualizado

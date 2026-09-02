@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alexlizzt.inventory_service.application.command.UpdateCategoryCommand;
+import com.alexlizzt.inventory_service.domain.exception.CategoryNotFoundException;
 import com.alexlizzt.inventory_service.domain.model.Category;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 
@@ -20,7 +21,7 @@ public class UpdateCategoryUseCase {
     public Category execute(UpdateCategoryCommand command) {
         // 1. Buscar si la categoría existe
         Category category = categoryRepository.findById(command.id())
-                .orElseThrow(() -> new IllegalArgumentException("Categoría no encontrada con ID: " + command.id()));
+                .orElseThrow(() -> new CategoryNotFoundException(command.id()));
 
 
         // 3. Actualizar datos aplicando el comportamiento del dominio

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alexlizzt.inventory_service.application.dto.response.StockResponse;
+import com.alexlizzt.inventory_service.domain.exception.StockNotFoundException;
 import com.alexlizzt.inventory_service.domain.model.Stock;
 import com.alexlizzt.inventory_service.domain.repository.StockRepository;
 
@@ -19,7 +20,7 @@ public class GetStockByProductUseCase {
     @Transactional(readOnly = true)
     public StockResponse execute(String productId) {
         Stock stock = stockRepository.findByProductId(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Stock not found for product ID: " + productId));
+                .orElseThrow(() -> new StockNotFoundException(productId));
 
         return new StockResponse(
                 stock.getProductId(),
