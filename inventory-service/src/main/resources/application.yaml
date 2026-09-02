@@ -3,6 +3,10 @@ server:
   servlet:
     context-path: /api/v1/inventory-service
 
+app:
+  problem:
+    base-uri: ${BASE_PROBLEM_URI:http://localhost:8080/problem/}
+
 ollama:
   host: ${OLLAMA_HOST:localhost}
   port: ${OLLAMA_PORT:11434}
