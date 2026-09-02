@@ -1,9 +1,9 @@
 package com.alexlizzt.inventory_service.infraestructure.security;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -15,24 +15,31 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.stereotype.Component;
 
 @Component
-public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
-    private final JwtGrantedAuthoritiesConverter defaultGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+public class KeycloakJwtAuthenticationConverter
+        implements Converter<Jwt, AbstractAuthenticationToken> {
+
+    private final JwtGrantedAuthoritiesConverter scopesConverter =
+            new JwtGrantedAuthoritiesConverter();
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        Collection<GrantedAuthority> authorities = defaultGrantedAuthoritiesConverter.convert(jwt);
 
-        // Extraer roles del claim 'realm_access'
+        List<GrantedAuthority> authorities = new ArrayList<>(
+                scopesConverter.convert(jwt)
+        );
+
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-        if (realmAccess != null && realmAccess.containsKey("roles")) {
-            @SuppressWarnings("unchecked")
-            List<String> roles = (List<String>) realmAccess.get("roles");
-            List<GrantedAuthority> realmRoles = roles.stream()
-                    // Si ya viene como 'ROLE_ADMIN', se deja tal cual; si no, se prefija.
-                    .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
-            authorities.addAll(realmRoles);
+
+        if (realmAccess != null) {
+            Object rolesObject = realmAccess.get("roles");
+
+            if (rolesObject instanceof List<?> roles) {
+                roles.stream()
+                        .filter(String.class::isInstance)
+                        .map(String.class::cast)
+                        .map(SimpleGrantedAuthority::new)
+                        .forEach(authorities::add);
+            }
         }
 
         return new JwtAuthenticationToken(jwt, authorities);

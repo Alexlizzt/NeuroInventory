@@ -27,16 +27,23 @@ public class SecurityConfig {
     private final String baseProblemUri;
 
     public SecurityConfig(
-            KeycloakJwtAuthenticationConverter jwtAuthenticationConverter, 
+            KeycloakJwtAuthenticationConverter jwtAuthenticationConverter,
             ObjectMapper objectMapper,
             @Value("${app.problem.base-uri:http://localhost:8080/problem/}") String baseProblemUri) {
+
         this.jwtAuthenticationConverter = jwtAuthenticationConverter;
         this.objectMapper = objectMapper;
-        this.baseProblemUri = baseProblemUri.endsWith("/") ? baseProblemUri : baseProblemUri + "/";
+        this.baseProblemUri = baseProblemUri.endsWith("/")
+                ? baseProblemUri
+                : baseProblemUri + "/";
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            AuthenticationEntryPoint authenticationEntryPoint,
+            AccessDeniedHandler accessDeniedHandler) throws Exception {
+
         http
             .csrf(csrf -> csrf.disable())
 
@@ -58,13 +65,21 @@ public class SecurityConfig {
                     "/actuator/info"
                 ).permitAll()
 
-                // lo demás requiere autenticación
+                // Lo demás requiere autenticación
                 .anyRequest().authenticated()
             )
 
-            .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
-            );
+            .exceptionHandling(exception -> exception
+            .authenticationEntryPoint(authenticationEntryPoint)
+            .accessDeniedHandler(accessDeniedHandler)
+        )
+
+        .oauth2ResourceServer(oauth2 -> oauth2
+            .authenticationEntryPoint(authenticationEntryPoint)
+            .jwt(jwt -> jwt
+                .jwtAuthenticationConverter(jwtAuthenticationConverter)
+            )
+        );
 
         return http.build();
     }
@@ -72,36 +87,54 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint customAuthenticationEntryPoint() {
         return (request, response, authException) -> {
-            response.setStatus(401);
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/problem+json");
 
             ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.UNAUTHORIZED,
                 "Authentication token is missing or invalid."
             );
-            problem.setType(URI.create(baseProblemUri + "unauthorized"));
-            problem.setTitle("Unauthorized");
-            problem.setInstance(URI.create(request.getRequestURI()));
 
-            response.getWriter().write(objectMapper.writeValueAsString(problem));
+            problem.setType(
+                URI.create(baseProblemUri + "unauthorized")
+            );
+
+            problem.setTitle("Unauthorized");
+
+            problem.setInstance(
+                URI.create(request.getRequestURI())
+            );
+
+            response.getWriter().write(
+                objectMapper.writeValueAsString(problem)
+            );
         };
     }
 
     @Bean
     public AccessDeniedHandler customAccessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
-            response.setStatus(403);
+            response.setStatus(HttpStatus.FORBIDDEN.value());
             response.setContentType("application/problem+json");
 
             ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.FORBIDDEN,
                 "The user does not have permission to perform this operation."
             );
-            problem.setType(URI.create(baseProblemUri + "access-denied"));
-            problem.setTitle("Access denied");
-            problem.setInstance(URI.create(request.getRequestURI()));
 
-            response.getWriter().write(objectMapper.writeValueAsString(problem));
+            problem.setType(
+                URI.create(baseProblemUri + "access-denied")
+            );
+
+            problem.setTitle("Access denied");
+
+            problem.setInstance(
+                URI.create(request.getRequestURI())
+            );
+
+            response.getWriter().write(
+                objectMapper.writeValueAsString(problem)
+            );
         };
     }
 }
