@@ -1,14 +1,37 @@
 package com.alexlizzt.inventory_service.application.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(
+    name = "CreateCategoryRequest",
+    description = "Datos necesarios para crear una nueva categoría"
+)
 public record CreateCategoryRequest(
-    @NotBlank(message = "Category name is required")
-    @Size(min = 2, max = 100, message = "Category name must be between 2 and 100 characters")
+    @Schema(
+        description = "Nombre de la categoría",
+        example = "Electrónica",
+        minLength = 2,
+        maxLength = 100
+    )
+    @NotBlank(message = "El nombre de la categoría es obligatorio")
+    @Size(
+        min = 2,
+        max = 100,
+        message = "El nombre de la categoría debe tener entre 2 y 100 caracteres"
+    )
     String name,
 
-    @Size(max = 255, message = "Description cannot exceed 255 characters")
+    @Schema(
+        description = "Descripción opcional de la categoría",
+        example = "Productos electrónicos y dispositivos tecnológicos",
+        maxLength = 255
+    )
+    @Size(
+        max = 255,
+        message = "La descripción no puede superar los 255 caracteres"
+    )
     String description
 ) {
 
