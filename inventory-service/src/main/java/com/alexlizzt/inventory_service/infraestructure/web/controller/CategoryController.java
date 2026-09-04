@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.GetCategoriesUseCase;
+import com.alexlizzt.inventory_service.domain.service.CreateCategoryService;
 import com.alexlizzt.inventory_service.domain.service.FindCategoryService;
 import com.alexlizzt.inventory_service.domain.service.GetCategoriesService;
 import com.alexlizzt.inventory_service.domain.service.UpdateCategoryService;
@@ -39,17 +38,17 @@ import jakarta.validation.Valid;
 @Tag(name = "Categorías", description = "Endpoints para la gestión y consulta de categorías de productos")
 public class CategoryController {
 
-    private final CreateCategoryUseCase createCategoryUseCase;
+    private final CreateCategoryService createCategoryService;
     private final GetCategoriesService getCategoriesService;
     private final FindCategoryService findCategoryService;
     private final UpdateCategoryService updateCategoryService;
 
     public CategoryController(
-            CreateCategoryUseCase createCategoryUseCase,
+            CreateCategoryService createCategoryService,
             GetCategoriesService getCategoriesService,
             FindCategoryService findCategoryService,
             UpdateCategoryService updateCategoryService) {
-        this.createCategoryUseCase = createCategoryUseCase;
+        this.createCategoryService = createCategoryService;
         this.getCategoriesService = getCategoriesService;
         this.findCategoryService = findCategoryService;
         this.updateCategoryService = updateCategoryService;
@@ -69,7 +68,7 @@ public class CategoryController {
     public ResponseEntity<CategoryResponse> createCategory(
             @Valid @RequestBody CreateCategoryRequest request) {
         var command = new CreateCategoryCommand(request.name(), request.description());
-        CategoryResponse response = createCategoryUseCase.execute(command);
+        CategoryResponse response = createCategoryService.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
