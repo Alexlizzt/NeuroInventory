@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.ListCategoriesUseCase;
+import com.alexlizzt.inventory_service.application.usecase.GetCategoriesUseCase;
 import com.alexlizzt.inventory_service.application.command.CreateCategoryCommand;
 import com.alexlizzt.inventory_service.application.dto.request.CreateCategoryRequest;
 import com.alexlizzt.inventory_service.application.dto.response.CategoryResponse;
@@ -31,7 +31,7 @@ class CategoryControllerTest {
 	@Mock
 	private CreateCategoryUseCase createCategoryUseCase;
 	@Mock
-	private ListCategoriesUseCase listCategoriesUseCase;
+	private GetCategoriesUseCase listCategoriesUseCase;
 
 	@InjectMocks
 	private CategoryController categoryController;

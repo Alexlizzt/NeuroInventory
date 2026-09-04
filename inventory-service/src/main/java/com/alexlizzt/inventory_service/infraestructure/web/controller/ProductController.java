@@ -9,12 +9,15 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alexlizzt.inventory_service.application.command.CreateProductCommand;
+import com.alexlizzt.inventory_service.application.command.UpdateProductCommand;
+import com.alexlizzt.inventory_service.application.dto.request.UpdateProductRequest;
 import com.alexlizzt.inventory_service.application.dto.response.ProductResponse;
 import com.alexlizzt.inventory_service.application.dto.response.SemanticSearchProductResponse;
 import com.alexlizzt.inventory_service.application.query.PageQuery;
@@ -24,6 +27,7 @@ import com.alexlizzt.inventory_service.application.usecase.DeleteProductUseCase;
 import com.alexlizzt.inventory_service.application.usecase.FindProductUseCase;
 import com.alexlizzt.inventory_service.application.usecase.ListProductsUseCase;
 import com.alexlizzt.inventory_service.application.usecase.SearchProductsSemanticallyUseCase;
+import com.alexlizzt.inventory_service.application.usecase.UpdateProductUseCase;
 import com.alexlizzt.inventory_service.infraestructure.web.dto.request.CreateProductRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +47,7 @@ public class ProductController {
     private final CreateProductUseCase createProductUseCase;
     private final FindProductUseCase findProductUseCase;
     private final ListProductsUseCase listProductsUseCase;
+    private final UpdateProductUseCase updateProductUseCase;
     private final DeleteProductUseCase deleteProductUseCase;
     private final SearchProductsSemanticallyUseCase searchSemanticallyUseCase;
 
@@ -50,11 +55,13 @@ public class ProductController {
             CreateProductUseCase createProductUseCase,
             FindProductUseCase findProductUseCase,
             ListProductsUseCase listProductsUseCase,
+            UpdateProductUseCase updateProductUseCase,
             DeleteProductUseCase deleteProductUseCase,
             SearchProductsSemanticallyUseCase searchSemanticallyUseCase) {
         this.createProductUseCase = createProductUseCase;
         this.findProductUseCase = findProductUseCase;
         this.listProductsUseCase = listProductsUseCase;
+        this.updateProductUseCase = updateProductUseCase;
         this.deleteProductUseCase = deleteProductUseCase;
         this.searchSemanticallyUseCase = searchSemanticallyUseCase;
     }
@@ -145,6 +152,52 @@ public class ProductController {
             @RequestParam String query,
             @RequestParam(defaultValue = "5") int limit) {
         return ResponseEntity.ok(searchSemanticallyUseCase.execute(query, limit));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(
+        summary = "Actualizar un producto",
+        description = "Actualiza los datos de un producto existente."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Producto actualizado exitosamente",
+            content = @Content(schema = @Schema(implementation = ProductResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Producto no encontrado",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Datos de entrada inválidos",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content
+        )
+    })
+    public ResponseEntity<ProductResponse> update(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateProductRequest request) {
+
+        var command = new UpdateProductCommand(
+            id,
+            request.name(),
+            request.description(),
+            request.price(),
+            request.categoryId(),
+            request.active()
+        );
+
+        return ResponseEntity.ok(
+            updateProductUseCase.execute(command)
+        );
     }
 
     @DeleteMapping("/{id}")

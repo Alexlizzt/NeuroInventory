@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.alexlizzt.inventory_service.application.dto.response.CategoryResponse;
 import com.alexlizzt.inventory_service.application.query.PageResult;
 import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.ListCategoriesUseCase;
+import com.alexlizzt.inventory_service.application.usecase.GetCategoriesUseCase;
 
 @WebMvcTest(
     controllers = CategoryController.class,
@@ -37,7 +37,7 @@ class CategoryControllerWebTest {
     private CreateCategoryUseCase createCategoryUseCase;
 
     @MockitoBean
-    private ListCategoriesUseCase listCategoriesUseCase;
+    private GetCategoriesUseCase listCategoriesUseCase;
 
     @Test
     void shouldCreateCategoryAsAdmin() throws Exception {

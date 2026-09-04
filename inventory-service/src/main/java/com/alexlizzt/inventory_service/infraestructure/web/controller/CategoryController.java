@@ -12,10 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.FindCategoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.ListCategoriesUseCase;
-import com.alexlizzt.inventory_service.application.usecase.UpdateCategoryUseCase;
-import com.alexlizzt.inventory_service.domain.model.Category;
+import com.alexlizzt.inventory_service.application.usecase.GetCategoriesUseCase;
+import com.alexlizzt.inventory_service.domain.service.FindCategoryService;
+import com.alexlizzt.inventory_service.domain.service.GetCategoriesService;
 import com.alexlizzt.inventory_service.domain.service.UpdateCategoryService;
 import com.alexlizzt.inventory_service.application.command.CreateCategoryCommand;
 import com.alexlizzt.inventory_service.application.command.UpdateCategoryCommand;
@@ -41,18 +40,18 @@ import jakarta.validation.Valid;
 public class CategoryController {
 
     private final CreateCategoryUseCase createCategoryUseCase;
-    private final ListCategoriesUseCase getCategoriesUseCase;
-    private final FindCategoryUseCase findCategoryUseCase;
+    private final GetCategoriesService getCategoriesService;
+    private final FindCategoryService findCategoryService;
     private final UpdateCategoryService updateCategoryService;
 
     public CategoryController(
             CreateCategoryUseCase createCategoryUseCase,
-            ListCategoriesUseCase getCategoriesUseCase,
-            FindCategoryUseCase findCategoryUseCase,
+            GetCategoriesService getCategoriesService,
+            FindCategoryService findCategoryService,
             UpdateCategoryService updateCategoryService) {
         this.createCategoryUseCase = createCategoryUseCase;
-        this.getCategoriesUseCase = getCategoriesUseCase;
-        this.findCategoryUseCase = findCategoryUseCase;
+        this.getCategoriesService = getCategoriesService;
+        this.findCategoryService = findCategoryService;
         this.updateCategoryService = updateCategoryService;
     }
 
@@ -94,7 +93,7 @@ public class CategoryController {
             @RequestParam(defaultValue = "ASC") String direction) {
         
         var query = new PageQuery(page, size, sortBy, direction);
-        PageResult<CategoryResponse> response = getCategoriesUseCase.execute(query);
+        PageResult<CategoryResponse> response = getCategoriesService.execute(query);
         return ResponseEntity.ok(response);
     }
 
@@ -122,7 +121,7 @@ public class CategoryController {
         )
     })
     public ResponseEntity<CategoryResponse> getById(@PathVariable String id) {
-        return ResponseEntity.ok(findCategoryUseCase.execute(id));
+        return ResponseEntity.ok(findCategoryService.execute(id));
     }
 
     @PutMapping("/{id}")
