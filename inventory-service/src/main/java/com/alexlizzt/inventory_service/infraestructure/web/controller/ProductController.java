@@ -158,7 +158,7 @@ public class ProductController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(
         summary = "Actualizar un producto",
-        description = "Actualiza los datos de un producto existente."
+        description = "Modifica los datos de un producto existente. Los campos no enviados mantendrán su valor actual."
     )
     @ApiResponses(value = {
         @ApiResponse(
@@ -167,13 +167,18 @@ public class ProductController {
             content = @Content(schema = @Schema(implementation = ProductResponse.class))
         ),
         @ApiResponse(
-            responseCode = "404",
-            description = "Producto no encontrado",
+            responseCode = "400",
+            description = "Datos de entrada inválidos",
             content = @Content
         ),
         @ApiResponse(
-            responseCode = "400",
-            description = "Datos de entrada inválidos",
+            responseCode = "404",
+            description = "Producto o categoría no encontrada",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Conflicto: El nombre ya pertenece a otro producto",
             content = @Content
         ),
         @ApiResponse(
@@ -182,7 +187,7 @@ public class ProductController {
             content = @Content
         )
     })
-    public ResponseEntity<ProductResponse> update(
+    public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable String id,
             @Valid @RequestBody UpdateProductRequest request) {
 
@@ -195,9 +200,9 @@ public class ProductController {
             request.active()
         );
 
-        return ResponseEntity.ok(
-            updateProductUseCase.execute(command)
-        );
+        ProductResponse response = updateProductUseCase.execute(command);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
