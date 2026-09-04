@@ -12,6 +12,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 import com.alexlizzt.inventory_service.domain.exception.CategoryNotFoundException;
 import com.alexlizzt.inventory_service.domain.exception.DuplicateCategoryNameException;
@@ -20,6 +21,7 @@ import com.alexlizzt.inventory_service.domain.exception.InsufficientStockExcepti
 import com.alexlizzt.inventory_service.domain.exception.InvalidInventoryMovementTypeException;
 import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.exception.StockNotFoundException;
+
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -135,6 +137,23 @@ public class GlobalExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
         return problem;
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+public ProblemDetail handleAccessDenied(
+        AccessDeniedException ex,
+        HttpServletRequest request) {
+
+    ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            "You do not have permission to access this resource."
+    );
+
+    problem.setType(URI.create(baseProblemUri + "access-denied"));
+    problem.setTitle("Access denied");
+    problem.setInstance(URI.create(request.getRequestURI()));
+
+    return problem;
+}
 
 
     // Excepciones genéricas no capturadas (500)
