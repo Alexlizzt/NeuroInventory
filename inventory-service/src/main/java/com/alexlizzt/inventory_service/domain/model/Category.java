@@ -25,7 +25,7 @@ public class Category {
             this.name = name;
         }
         if (description != null) {
-            this.description = description;
+            this.description = description.trim();
         }
         this.updatedAt = LocalDateTime.now(ZoneOffset.UTC);
     }

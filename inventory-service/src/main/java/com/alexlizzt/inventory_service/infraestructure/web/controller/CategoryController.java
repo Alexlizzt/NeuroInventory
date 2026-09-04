@@ -4,16 +4,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
+import com.alexlizzt.inventory_service.application.usecase.FindCategoryUseCase;
 import com.alexlizzt.inventory_service.application.usecase.ListCategoriesUseCase;
-
+import com.alexlizzt.inventory_service.application.usecase.UpdateCategoryUseCase;
+import com.alexlizzt.inventory_service.domain.model.Category;
+import com.alexlizzt.inventory_service.domain.service.UpdateCategoryService;
 import com.alexlizzt.inventory_service.application.command.CreateCategoryCommand;
+import com.alexlizzt.inventory_service.application.command.UpdateCategoryCommand;
 import com.alexlizzt.inventory_service.application.dto.request.CreateCategoryRequest;
+import com.alexlizzt.inventory_service.application.dto.request.UpdateCategoryRequest;
 import com.alexlizzt.inventory_service.application.dto.response.CategoryResponse;
 import com.alexlizzt.inventory_service.application.query.PageQuery;
 import com.alexlizzt.inventory_service.application.query.PageResult;
@@ -35,12 +42,18 @@ public class CategoryController {
 
     private final CreateCategoryUseCase createCategoryUseCase;
     private final ListCategoriesUseCase getCategoriesUseCase;
+    private final FindCategoryUseCase findCategoryUseCase;
+    private final UpdateCategoryService updateCategoryService;
 
     public CategoryController(
             CreateCategoryUseCase createCategoryUseCase,
-            ListCategoriesUseCase getCategoriesUseCase) {
+            ListCategoriesUseCase getCategoriesUseCase,
+            FindCategoryUseCase findCategoryUseCase,
+            UpdateCategoryService updateCategoryService) {
         this.createCategoryUseCase = createCategoryUseCase;
         this.getCategoriesUseCase = getCategoriesUseCase;
+        this.findCategoryUseCase = findCategoryUseCase;
+        this.updateCategoryService = updateCategoryService;
     }
 
     @PostMapping
@@ -84,4 +97,75 @@ public class CategoryController {
         PageResult<CategoryResponse> response = getCategoriesUseCase.execute(query);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @Operation(
+        summary = "Obtener una categoría por ID",
+        description = "Obtiene la información de una categoría a partir de su identificador."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Categoría encontrada exitosamente",
+            content = @Content(schema = @Schema(implementation = CategoryResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Categoría no encontrada",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content
+        )
+    })
+    public ResponseEntity<CategoryResponse> getById(@PathVariable String id) {
+        return ResponseEntity.ok(findCategoryUseCase.execute(id));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(
+        summary = "Actualizar una categoría",
+        description = "Actualiza el nombre y descripción de una categoría existente."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Categoría actualizada exitosamente",
+            content = @Content(schema = @Schema(implementation = CategoryResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Categoría no encontrada",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Datos de entrada inválidos",
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Error interno del servidor",
+            content = @Content
+        )
+    })
+    public ResponseEntity<CategoryResponse> update(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateCategoryRequest request) {
+
+        var command = new UpdateCategoryCommand(
+            id,
+            request.name(),
+            request.description()
+        );
+
+        CategoryResponse response = updateCategoryService.execute(command);
+
+        return ResponseEntity.ok(response);
+    }
+
 }
