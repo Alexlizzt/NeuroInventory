@@ -22,12 +22,13 @@ import com.alexlizzt.inventory_service.application.dto.response.ProductResponse;
 import com.alexlizzt.inventory_service.application.dto.response.SemanticSearchProductResponse;
 import com.alexlizzt.inventory_service.application.query.PageQuery;
 import com.alexlizzt.inventory_service.application.query.PageResult;
-import com.alexlizzt.inventory_service.application.usecase.CreateProductUseCase;
-import com.alexlizzt.inventory_service.application.usecase.DeleteProductUseCase;
-import com.alexlizzt.inventory_service.application.usecase.FindProductUseCase;
-import com.alexlizzt.inventory_service.application.usecase.ListProductsUseCase;
-import com.alexlizzt.inventory_service.application.usecase.SearchProductsSemanticallyUseCase;
-import com.alexlizzt.inventory_service.application.usecase.UpdateProductUseCase;
+
+import com.alexlizzt.inventory_service.domain.service.CreateProductService;
+import com.alexlizzt.inventory_service.domain.service.DeleteProductService;
+import com.alexlizzt.inventory_service.domain.service.FindProductService;
+import com.alexlizzt.inventory_service.domain.service.ListProductService;
+import com.alexlizzt.inventory_service.domain.service.SearchProductsSemanticallyService;
+import com.alexlizzt.inventory_service.domain.service.UpdateProductService;
 import com.alexlizzt.inventory_service.infraestructure.web.dto.request.CreateProductRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,26 +45,26 @@ import jakarta.validation.Valid;
 @RequestMapping("/products")
 @Tag(name = "Productos", description = "Endpoints para el catálogo de productos y búsqueda semántica respaldada por IA")
 public class ProductController {
-    private final CreateProductUseCase createProductUseCase;
-    private final FindProductUseCase findProductUseCase;
-    private final ListProductsUseCase listProductsUseCase;
-    private final UpdateProductUseCase updateProductUseCase;
-    private final DeleteProductUseCase deleteProductUseCase;
-    private final SearchProductsSemanticallyUseCase searchSemanticallyUseCase;
+    private final CreateProductService createProductService;
+    private final FindProductService findProductService;
+    private final ListProductService listProductsService;
+    private final UpdateProductService updateProductService;
+    private final DeleteProductService deleteProductService;
+    private final SearchProductsSemanticallyService searchSemanticallyService;
 
     public ProductController(
-            CreateProductUseCase createProductUseCase,
-            FindProductUseCase findProductUseCase,
-            ListProductsUseCase listProductsUseCase,
-            UpdateProductUseCase updateProductUseCase,
-            DeleteProductUseCase deleteProductUseCase,
-            SearchProductsSemanticallyUseCase searchSemanticallyUseCase) {
-        this.createProductUseCase = createProductUseCase;
-        this.findProductUseCase = findProductUseCase;
-        this.listProductsUseCase = listProductsUseCase;
-        this.updateProductUseCase = updateProductUseCase;
-        this.deleteProductUseCase = deleteProductUseCase;
-        this.searchSemanticallyUseCase = searchSemanticallyUseCase;
+            CreateProductService createProductService,
+            FindProductService findProductService,
+            ListProductService listProductsService,
+            UpdateProductService updateProductService,
+            DeleteProductService deleteProductService,
+            SearchProductsSemanticallyService searchSemanticallyService) {
+        this.createProductService = createProductService;
+        this.findProductService = findProductService;
+        this.listProductsService = listProductsService;
+        this.updateProductService = updateProductService;
+        this.deleteProductService = deleteProductService;
+        this.searchSemanticallyService = searchSemanticallyService;
     }
 
     @PostMapping
@@ -87,7 +88,7 @@ public class ProductController {
             request.initialStock(),
             request.minStock()
         );
-        ProductResponse response = createProductUseCase.execute(command);
+        ProductResponse response = createProductService.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -106,7 +107,7 @@ public class ProductController {
         )
     })
     public ResponseEntity<ProductResponse> getById(@PathVariable String id) {
-        return ResponseEntity.ok(findProductUseCase.execute(id));
+        return ResponseEntity.ok(findProductService.execute(id));
     }
 
     @GetMapping
@@ -129,7 +130,7 @@ public class ProductController {
             @RequestParam(defaultValue = "ASC") String direction) {
         
         var query = new PageQuery(page, size, sortBy, direction);
-        PageResult<ProductResponse> response = listProductsUseCase.execute(query);
+        PageResult<ProductResponse> response = listProductsService.execute(query);
         return ResponseEntity.ok(response);
     }
 
@@ -151,7 +152,7 @@ public class ProductController {
     public ResponseEntity<List<SemanticSearchProductResponse>> searchSemantically(
             @RequestParam String query,
             @RequestParam(defaultValue = "5") int limit) {
-        return ResponseEntity.ok(searchSemanticallyUseCase.execute(query, limit));
+        return ResponseEntity.ok(searchSemanticallyService.execute(query, limit));
     }
 
     @PutMapping("/{id}")
@@ -200,7 +201,7 @@ public class ProductController {
             request.active()
         );
 
-        ProductResponse response = updateProductUseCase.execute(command);
+        ProductResponse response = updateProductService.execute(command);
 
         return ResponseEntity.ok(response);
     }
@@ -214,7 +215,7 @@ public class ProductController {
         @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content)
     })
     public ResponseEntity<Void> delete(@PathVariable String id) {
-        deleteProductUseCase.execute(id);
+        deleteProductService.execute(id);
         return ResponseEntity.noContent().build();
     }
 }
