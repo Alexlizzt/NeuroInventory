@@ -18,10 +18,10 @@ import com.alexlizzt.inventory_service.application.dto.response.InventoryMovemen
 import com.alexlizzt.inventory_service.application.dto.response.StockResponse;
 import com.alexlizzt.inventory_service.application.query.PageQuery;
 import com.alexlizzt.inventory_service.application.query.PageResult;
-import com.alexlizzt.inventory_service.application.usecase.GetInventoryHistoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.GetLowStockUseCase;
-import com.alexlizzt.inventory_service.application.usecase.GetStockByProductUseCase;
-import com.alexlizzt.inventory_service.application.usecase.RegisterInventoryMovementUseCase;
+import com.alexlizzt.inventory_service.domain.service.GetInventoryHistoryService;
+import com.alexlizzt.inventory_service.domain.service.GetLowStockService;
+import com.alexlizzt.inventory_service.domain.service.GetStockByProductService;
+import com.alexlizzt.inventory_service.domain.service.RegisterInventoryMovementService;
 import com.alexlizzt.inventory_service.infraestructure.web.dto.request.RegisterMovementRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,20 +37,20 @@ import jakarta.validation.Valid;
 @Tag(name = "Inventario y Movimientos", description = "Endpoints para la gestión de existencias de stock, control de saldo y registro de movimientos (Kardex)")
 public class InventoryController {
 
-    private final RegisterInventoryMovementUseCase registerMovementUseCase;
-    private final GetStockByProductUseCase getStockByProductUseCase;
-    private final GetLowStockUseCase getLowStockUseCase;
-    private final GetInventoryHistoryUseCase getHistoryUseCase;
+    private final RegisterInventoryMovementService registerMovementService;
+    private final GetStockByProductService getStockByProductService;
+    private final GetLowStockService getLowStockService;
+    private final GetInventoryHistoryService getHistoryService;
 
     public InventoryController(
-            RegisterInventoryMovementUseCase registerMovementUseCase,
-            GetStockByProductUseCase getStockByProductUseCase,
-            GetLowStockUseCase getLowStockUseCase,
-            GetInventoryHistoryUseCase getHistoryUseCase) {
-        this.registerMovementUseCase = registerMovementUseCase;
-        this.getStockByProductUseCase = getStockByProductUseCase;
-        this.getLowStockUseCase = getLowStockUseCase;
-        this.getHistoryUseCase = getHistoryUseCase;
+            RegisterInventoryMovementService registerMovementService,
+            GetStockByProductService getStockByProductService,
+            GetLowStockService getLowStockService,
+            GetInventoryHistoryService getHistoryService) {
+        this.registerMovementService = registerMovementService;
+        this.getStockByProductService = getStockByProductService;
+        this.getLowStockService = getLowStockService;
+        this.getHistoryService = getHistoryService;
     }
 
     @PostMapping("/movements")
@@ -78,7 +78,7 @@ public class InventoryController {
             request.reason(),
             request.userId()
         );
-        InventoryMovementResponse response = registerMovementUseCase.execute(command);
+        InventoryMovementResponse response = registerMovementService.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -95,7 +95,7 @@ public class InventoryController {
             content = @Content)
     })
     public ResponseEntity<StockResponse> getStockByProduct(@PathVariable String productId) {
-        return ResponseEntity.ok(getStockByProductUseCase.execute(productId));
+        return ResponseEntity.ok(getStockByProductService.execute(productId));
     }
 
     @GetMapping("/stock/low")
@@ -111,7 +111,7 @@ public class InventoryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         var pageQuery = new PageQuery(page, size);
-        return ResponseEntity.ok(getLowStockUseCase.execute(pageQuery));
+        return ResponseEntity.ok(getLowStockService.execute(pageQuery));
     }
 
     @GetMapping("/movements/history/{productId}")
@@ -124,6 +124,6 @@ public class InventoryController {
             content = @Content)
     })
     public ResponseEntity<List<InventoryMovementResponse>> getHistory(@PathVariable String productId) {
-        return ResponseEntity.ok(getHistoryUseCase.execute(productId));
+        return ResponseEntity.ok(getHistoryService.execute(productId));
     }
 }

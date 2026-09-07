@@ -28,6 +28,7 @@ public class SearchProductsSemanticallyService implements SearchProductsSemantic
         this.productRepository = productRepository;
     }
 
+    @Override 
     @Transactional(readOnly = true)
     public List<SemanticSearchProductResponse> execute(String query, int limit) {
         if (query == null || query.isBlank()) {
