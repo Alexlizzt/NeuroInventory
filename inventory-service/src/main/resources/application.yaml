@@ -41,7 +41,8 @@ spring:
 
   flyway:
     enabled: true         # Habilita Flyway para gestionar los scripts SQL
-    baseline-on-migrate: true # Permite que Flyway cree una línea base si la BD ya tiene datos
+    locations: classpath:db/migration
+    #baseline-on-migrate: true # Permite que Flyway cree una línea base si la BD ya tiene datos
 
   security:
     oauth2:
