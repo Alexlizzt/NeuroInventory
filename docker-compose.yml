@@ -95,36 +95,46 @@ services:
       - neuroinventory-net
 
   # ==========================================================================
-  # 3. LLM Local y Embeddings (Ollama)
+  # 3. LLM Local y Embeddings (Ollama) 
+  # use https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
   # ==========================================================================
-  #ollama:
-  #  image: ollama/ollama:latest
-  #  container_name: neuroinventory-ollama
-  #  ports:
-  #    - "${OLLAMA_PORT}:11434"
-  #  volumes:
-  #    - ollama_data:/root/.ollama
-  #  networks:
-  #    - neuroinventory-net
+  ollama:
+    build:
+      context: .
+      dockerfile: docker/ollama/Dockerfile
+    container_name: neuroinventory-ollama
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - neuroinventory-net
 
   # ==========================================================================
   # 4. AI Service (FastAPI)
   # ==========================================================================
-  #ai-service:
-  #  build: ./ai-service
-  #  container_name: neuroinventory-ai-service
-  #  environment:
-  #    DATABASE_URL: ${DATABASE_URL}
-  #    OLLAMA_HOST: ${OLLAMA_HOST}
-  #  ports:
-  #    - "${AI_SERVICE_PORT}:8000"
-  #  depends_on:
-  #    postgres:
-  #      condition: service_healthy
-  #    #ollama:
-  #    #  condition: service_started
-  #  networks:
-  #    - neuroinventory-net
+  ai-service:
+    build: ./ai-service
+    container_name: neuroinventory-ai-service
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      OLLAMA_HOST: ${OLLAMA_HOST}
+    ports:
+      - "${AI_SERVICE_PORT}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - neuroinventory-net
 
   # ==========================================================================
   # 5. Inventory Service (Spring Boot Backend)
@@ -149,7 +159,7 @@ services:
 #
 volumes:
   postgres_data:
-#  ollama_data:
+  ollama_data:
 
 networks:
   neuroinventory-net:
