@@ -6,3 +6,6 @@ llama-index-embeddings-ollama
 llama-index-vector-stores-postgres
 psycopg2-binary
 pydantic
+langchain-core>=0.1.0
+langchain-community>=0.0.10
+langchain-postgres>=0.0.1
