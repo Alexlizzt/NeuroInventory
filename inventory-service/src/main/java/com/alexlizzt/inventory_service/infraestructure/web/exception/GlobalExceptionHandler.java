@@ -1,6 +1,7 @@
 package com.alexlizzt.inventory_service.infraestructure.web.exception;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,9 +10,12 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.alexlizzt.inventory_service.domain.exception.CategoryNotFoundException;
@@ -167,6 +171,26 @@ public ProblemDetail handleAccessDenied(
         problem.setTitle("Internal server error");
         problem.setInstance(URI.create(request.getRequestURI()));
         return problem;
+    }
+
+    @ExceptionHandler(ResourceAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleTimeout(ResourceAccessException ex) {
+        return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(Map.of(
+                "timestamp", Instant.now(),
+                "status", HttpStatus.GATEWAY_TIMEOUT.value(),
+                "error", "Gateway Timeout",
+                "message", "El servicio de IA no respondió a tiempo. Verifica los recursos locales."
+        ));
+    }
+
+    @ExceptionHandler(RestClientResponseException.class)
+    public ResponseEntity<Map<String, Object>> handleRestClientError(RestClientResponseException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of(
+                "timestamp", Instant.now(),
+                "status", ex.getStatusCode().value(),
+                "error", "AI Service Error",
+                "message", ex.getResponseBodyAsString()
+        ));
     }
 
 }
