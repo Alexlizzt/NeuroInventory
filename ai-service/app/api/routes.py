@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field
 
-from app.security.api_key import verify_api_key
+from app.security.auth import verify_api_key
 from app.embeddings.generator import EmbeddingService
 from app.rag.pipeline import RAGService
 
