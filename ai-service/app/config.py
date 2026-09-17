@@ -10,5 +10,6 @@ class Settings:
     postgres_password: str = os.getenv("POSTGRES_PASSWORD", "postgres")
     postgres_port: int = int(os.getenv("POSTGRES_PORT", "5432"))
     postgres_user: str = os.getenv("POSTGRES_USER", "postgres")
+    internal_api_key: str = os.getenv("INTERNAL_API_KEY", "default-internal-key")
 
 settings = Settings()

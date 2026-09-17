@@ -1,12 +1,18 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field
 
+from app.security.api_key import verify_api_key
 from app.embeddings.generator import EmbeddingService
 from app.rag.pipeline import RAGService
 
-router = APIRouter()
+# Aplicamos la protección con API Key a todas las rutas declaradas en este router
+router = APIRouter(
+    prefix="/api/v1/rag",
+    tags=["RAG"],
+    dependencies=[Depends(verify_api_key)]
+)
 
-# Instancia de servicios (o puedes usar Depends si los registras como dependencias)
+# Instancias de servicio
 embedding_service = EmbeddingService()
 rag_service = RAGService()
 
@@ -15,36 +21,40 @@ rag_service = RAGService()
 # ==============================================================================
 
 class EmbeddingRequest(BaseModel):
-    text: str
+    text: str = Field(..., description="Texto fuente para generar el vector de embeddings", example="Mantenimiento preventivo de motor")
 
 class EmbeddingResponse(BaseModel):
-    embedding: list[float]
+    embedding: list[float] = Field(..., description="Lista de valores flotantes del vector embedding")
 
 class DocumentIngestRequest(BaseModel):
-    product_id: str
-    content: str
-    metadata: dict = Field(default_factory=dict)
+    product_id: str = Field(..., description="ID del producto al que pertenece el documento", example="PROD-10293")
+    content: str = Field(..., description="Contenido en texto plano del manual o documentación")
+    metadata: dict = Field(default_factory=dict, description="Metadatos adicionales para filtrado")
 
 class DocumentIngestResponse(BaseModel):
-    status: str
-    doc_id: str
-    chunks_created: int
+    status: str = Field(..., example="SUCCESS")
+    doc_id: str = Field(..., description="Identificador único del documento ingestado")
+    chunks_created: int = Field(..., description="Cantidad de fragmentos procesados")
 
 class RAGQueryRequest(BaseModel):
-    question: str
-    product_id: str | None = None
+    question: str = Field(..., description="Consulta en lenguaje natural", example="¿Cómo se limpia el filtro?")
+    product_id: str | None = Field(default=None, description="Opcional: ID de producto para limitar el contexto")
 
 class RAGQueryResponse(BaseModel):
-    answer: str
-    sources: list[str]
+    answer: str = Field(..., description="Respuesta contextualizada por el LLM")
+    sources: list[str] = Field(..., description="Fragmentos de texto recuperados como fuente")
 
 class ErrorDetail(BaseModel):
     detail: str
 
-ERROR_500_RESPONSE = {
+COMMON_RESPONSES = {
+    status.HTTP_403_FORBIDDEN: {
+        "model": ErrorDetail,
+        "description": "API Key inválida o ausente en la cabecera X-API-KEY"
+    },
     status.HTTP_500_INTERNAL_SERVER_ERROR: {
         "model": ErrorDetail,
-        "description": "Error interno del servidor o falla en la comunicación con Ollama/Database"
+        "description": "Error interno del servidor o falla en la comunicación con Ollama/PGVector"
     }
 }
 
@@ -53,9 +63,11 @@ ERROR_500_RESPONSE = {
 # ==============================================================================
 
 @router.post(
-    "/embeddings/generate", 
+    "/embeddings", 
     response_model=EmbeddingResponse,
-    responses=ERROR_500_RESPONSE
+    responses=COMMON_RESPONSES,
+    summary="Generar Vector Embedding",
+    description="Calcula la representación vectorial de un texto usando el modelo de embeddings configurado."
 )
 async def generate_embedding(payload: EmbeddingRequest):
     try:
@@ -68,9 +80,11 @@ async def generate_embedding(payload: EmbeddingRequest):
         )
 
 @router.post(
-    "/rag/documents", 
+    "/documents", 
     response_model=DocumentIngestResponse,
-    responses=ERROR_500_RESPONSE
+    responses=COMMON_RESPONSES,
+    summary="Ingestar Documentación de Producto",
+    description="Divide en fragmentos e ingesta un manual en la base de datos de vectores PGVector."
 )
 async def ingest_document(payload: DocumentIngestRequest):
     try:
@@ -91,9 +105,11 @@ async def ingest_document(payload: DocumentIngestRequest):
         )
 
 @router.post(
-    "/rag/query", 
+    "/query", 
     response_model=RAGQueryResponse,
-    responses=ERROR_500_RESPONSE
+    responses=COMMON_RESPONSES,
+    summary="Consultar Motor RAG",
+    description="Recupera contexto vectorial de PGVector y responde preguntas usando la LLM local."
 )
 async def query_rag(payload: RAGQueryRequest):
     try:

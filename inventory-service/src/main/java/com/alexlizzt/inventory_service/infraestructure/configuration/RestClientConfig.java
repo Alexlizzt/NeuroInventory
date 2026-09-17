@@ -17,6 +17,9 @@ public class RestClientConfig {
     @Value("${ai.service.port}")
     private String aiServicePort;
 
+    @Value("${ai.service.api-key}")
+    private String internalApiKey;
+
     @Bean
     public RestClient aiRestClient() {
         // Configurar Timeouts para dar margen a la inferencia del LLM local
@@ -24,13 +27,14 @@ public class RestClientConfig {
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
         requestFactory.setReadTimeout(Duration.ofSeconds(180)); // 3 minutos de lectura
 
-        String baseUrl = String.format("http://%s:%s/api/v1", aiServiceHost, aiServicePort);
+        String baseUrl = String.format("http://%s:%s/api/v1/rag", aiServiceHost, aiServicePort);
 
         return RestClient.builder()
                 .baseUrl(baseUrl)
                 .requestFactory(requestFactory)
                 .defaultHeader("Content-Type", "application/json")
                 .defaultHeader("Accept", "application/json")
+                .defaultHeader("X-API-KEY", internalApiKey)
                 .build();
     }
 }
