@@ -10,12 +10,15 @@
       "publicClient": true,
       "protocol": "openid-connect",
       "redirectUris": [
-        "http://localhost:3000/*"
+        "http://localhost:4200/*"
       ],
       "webOrigins": ["+"],
-      "baseUrl": "http://localhost:3000",
+      "baseUrl": "http://localhost:4200",
       "standardFlowEnabled": true,
-      "directAccessGrantsEnabled": false
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     },
     {
       "clientId": "api-client",

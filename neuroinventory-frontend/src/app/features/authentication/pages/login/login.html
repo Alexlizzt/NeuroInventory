@@ -1,0 +1,13 @@
+<section class="login">
+  <div class="login-card">
+    <header>
+      <h1>NeuroInventory</h1>
+
+      <p>Sign in to continue.</p>
+    </header>
+
+    <button type="button" [disabled]="loading" (click)="login()">
+      {{ loading ? 'Redirecting...' : 'Sign in' }}
+    </button>
+  </div>
+</section>
