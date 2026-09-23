@@ -11,4 +11,9 @@ export class Header {
   private readonly authService = inject(AuthService);
 
   protected readonly user = this.authService.user;
+
+  protected async logout(): Promise<void> {
+    await this.authService.logout();
+  }
+  
 }
