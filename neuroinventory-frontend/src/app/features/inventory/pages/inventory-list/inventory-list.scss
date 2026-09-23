@@ -1,0 +1,44 @@
+.inventory-list {
+  max-width: 1200px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  margin: 0;
+}
+
+.page-header button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.inventory-content {
+  min-height: 300px;
+}
+
+.empty-state {
+  padding: 48px;
+  text-align: center;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+}
+
+.empty-state h2 {
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  margin: 0;
+}
