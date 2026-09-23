@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { HeaderUser } from './header-user';
+import { Component, inject } from '@angular/core';
+
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -7,8 +8,7 @@ import { HeaderUser } from './header-user';
   styleUrl: './header.scss',
 })
 export class Header {
-  protected readonly user: HeaderUser = {
-    name: 'Usuario',
-    email: 'usuario@example.com',
-  };
+  private readonly authService = inject(AuthService);
+
+  protected readonly user = this.authService.user;
 }
