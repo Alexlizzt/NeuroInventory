@@ -1,11 +1,17 @@
 <header class="header">
-
-  <div class="brand">
-    NeuroInventory
-  </div>
+  <div class="brand">NeuroInventory</div>
 
   <div class="user">
-    Usuario
-  </div>
+    <div class="user-info">
+      <span class="user-name">
+        {{ user.name }}
+      </span>
 
+      <span class="user-email">
+        {{ user.email }}
+      </span>
+    </div>
+
+    <button type="button" class="user-button" aria-label="Open user menu">▼</button>
+  </div>
 </header>

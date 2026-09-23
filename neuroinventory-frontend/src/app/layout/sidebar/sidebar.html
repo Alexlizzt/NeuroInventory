@@ -1,15 +1,7 @@
 <aside class="sidebar">
   <nav>
-    <a routerLink="/dashboard"> Dashboard </a>
-
-    <a routerLink="/products"> Products </a>
-
-    <a routerLink="/categories"> Categories </a>
-
-    <a routerLink="/inventory"> Inventory </a>
-
-    <a routerLink="/ai-assistant"> AI Assistant </a>
-
-    <a routerLink="/reports"> Reports </a>
+    @for (item of navigationItems; track item.route) {
+      <app-navigation-item [item]="item" />
+    }
   </nav>
 </aside>
