@@ -15,6 +15,7 @@ import { APP_CONFIG } from './core/config/app-config.token';
 import { environment } from './core/config/environment';
 
 import { apiUrlInterceptor } from './core/http/interceptors/api-url.interceptor';
+import { authTokenInterceptor } from './core/http/interceptors/auth-token.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -22,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideClientHydration(),
 
-    provideHttpClient(withInterceptors([apiUrlInterceptor])),
+    provideHttpClient(withInterceptors([authTokenInterceptor, apiUrlInterceptor])),
 
     {
       provide: APP_CONFIG,

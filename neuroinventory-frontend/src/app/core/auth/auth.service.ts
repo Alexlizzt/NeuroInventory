@@ -56,6 +56,10 @@ export class AuthService {
     await this.keycloak.logout();
   }
 
+  getToken(): string | null {
+    return this.keycloak?.token ?? null;
+  }
+
   private async loadUser(): Promise<void> {
     if (!this.keycloak?.authenticated) {
       return;
