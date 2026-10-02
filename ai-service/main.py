@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.api.routes import router as ai_router
+from app.api.search_routes import router as search_router
 
 app = FastAPI(
     title="NeuroInventory - AI Service",
@@ -8,6 +9,7 @@ app = FastAPI(
 )
 
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(search_router, prefix="/api/v1")
 
 @app.get("/health")
 def health_check():

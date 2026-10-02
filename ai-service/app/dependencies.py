@@ -5,7 +5,7 @@ from langchain_community.llms import Ollama
 from langchain_postgres import PGVector
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from settings import settings
+from app.config import settings
 
 # 1. Variables de entorno / Configuración
 DATABASE_URL = settings.database_url

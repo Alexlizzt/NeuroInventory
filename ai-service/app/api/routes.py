@@ -7,7 +7,7 @@ from app.rag.pipeline import RAGService
 
 # Aplicamos la protección con API Key a todas las rutas declaradas en este router
 router = APIRouter(
-    prefix="/api/v1/rag",
+    prefix="/rag",
     tags=["RAG"],
     dependencies=[Depends(verify_api_key)]
 )
