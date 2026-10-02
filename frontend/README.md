@@ -1,59 +1,84 @@
-# Frontend
+# Frontend — NeuroInventory
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.0.
+Aplicación web del proyecto NeuroInventory construida con **Angular 22** y **Angular Material**.
 
-## Development server
+Responsabilidades:
 
-To start a local development server, run:
+- Dashboard de inventario.
+- Gestión CRUD de productos, categorías y stock.
+- Login con Keycloak.
+- Chat IA y búsqueda semántica.
+- Visualización de stock.
 
-```bash
-ng serve
+## Prerrequisitos
+
+- Node.js (versión compatible con Angular 22).
+- npm 11.19.0 (definido como `packageManager` en `package.json`).
+- Backend en ejecución para las funcionalidades completas:
+  - `inventory-service` (Spring Boot) en `http://localhost:8080`.
+  - Keycloak en `http://localhost:9090` (realm `neuroinventory`, client `frontend-client`).
+
+## Configuración
+
+Las URLs de los servicios se definen en `src/environments/environment.ts`:
+
+```ts
+apiUrl: 'http://localhost:8080/api/v1/inventory-service',
+keycloak: { url, realm, clientId }
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Instalación
 
 ```bash
-ng generate component component-name
+npm ci
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Servidor de desarrollo
 
 ```bash
-ng generate --help
+npm start
 ```
 
-## Building
+Abre `http://localhost:4200/`. La app recarga automáticamente al modificar archivos.
 
-To build the project run:
+## Build
 
 ```bash
-ng build
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Los artefactos se generan en `dist/`. Para build de desarrollo con recarga:
 
 ```bash
-ng test
+npm run watch
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+## Tests
 
 ```bash
-ng e2e
+npm test
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Ejecuta las pruebas unitarias con Vitest.
 
-## Additional Resources
+## Docker
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```bash
+docker build -t neuroinventory-frontend .
+docker run -p 4200:4200 neuroinventory-frontend
+```
+
+También puedes levantarlo junto con el resto de servicios desde la raíz del repo:
+
+```bash
+docker compose up frontend
+```
+
+## Estructura
+
+```text
+src/app/
+├── core/        # auth (Keycloak), interceptors, models, services
+├── features/    # ai-assistant, categories, inventory, products
+└── layout/      # layout principal de la app
+```
