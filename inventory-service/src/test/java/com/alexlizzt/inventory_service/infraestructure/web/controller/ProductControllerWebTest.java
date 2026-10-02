@@ -38,6 +38,7 @@ import com.alexlizzt.inventory_service.domain.service.CreateProductService;
 import com.alexlizzt.inventory_service.domain.service.DeleteProductService;
 import com.alexlizzt.inventory_service.domain.service.FindProductService;
 import com.alexlizzt.inventory_service.domain.service.ListProductService;
+import com.alexlizzt.inventory_service.domain.service.ReindexProductsService;
 import com.alexlizzt.inventory_service.domain.service.SearchProductsSemanticallyService;
 import com.alexlizzt.inventory_service.domain.service.UpdateProductService;
 import com.alexlizzt.inventory_service.infraestructure.web.exception.GlobalExceptionHandler;
@@ -75,6 +76,9 @@ class ProductControllerWebTest {
 
     @MockitoBean
     private SearchProductsSemanticallyService searchSemanticallyService;
+
+    @MockitoBean
+    private ReindexProductsService reindexProductsService;
 
 
 	 @Test

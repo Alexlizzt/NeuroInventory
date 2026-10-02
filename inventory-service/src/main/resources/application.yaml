@@ -6,6 +6,10 @@ server:
 app:
   problem:
     base-uri: ${BASE_PROBLEM_URI:http://localhost:8080/problem/}
+  semantic-search:
+    reindex-on-startup: ${SEMANTIC_REINDEX_ON_STARTUP:true}
+    max-attempts: ${SEMANTIC_REINDEX_MAX_ATTEMPTS:5}
+    retry-delay-ms: ${SEMANTIC_REINDEX_RETRY_DELAY_MS:5000}
 
 ai:
   service:

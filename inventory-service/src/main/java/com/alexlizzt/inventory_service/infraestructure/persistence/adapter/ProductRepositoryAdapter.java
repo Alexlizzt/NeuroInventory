@@ -63,6 +63,14 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
+    public List<Product> findAll() {
+        return productJpaRepository.findAll()
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public PageResult<Product> findAllPaged(PageQuery pageQuery) {
         Pageable pageable = PageRequest.of(pageQuery.page(), pageQuery.size());
         var page = productJpaRepository.findAll(pageable);

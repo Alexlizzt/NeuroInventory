@@ -1,6 +1,7 @@
 package com.alexlizzt.inventory_service.domain.service;
 import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.model.Product;
+import com.alexlizzt.inventory_service.domain.port.AiServicePort;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,9 @@ class DeleteProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private AiServicePort aiServicePort;
 
     @InjectMocks
     private DeleteProductService deleteProductService;

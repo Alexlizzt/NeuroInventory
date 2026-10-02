@@ -8,7 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import com.alexlizzt.inventory_service.domain.model.Product;
 import com.alexlizzt.inventory_service.domain.model.SemanticMatch;
+import com.alexlizzt.inventory_service.infraestructure.ai.dto.IndexProductAiRequest;
 import com.alexlizzt.inventory_service.infraestructure.ai.dto.SemanticSearchAiRequest;
 import com.alexlizzt.inventory_service.infraestructure.ai.dto.SemanticSearchAiResponse;
 @Component
@@ -48,6 +50,50 @@ public class AiRestClientAdapter implements com.alexlizzt.inventory_service.doma
             log.error("Error calling FastAPI AI Service for semantic search with query: '{}'", query, e);
             // Fallback elegante: listado vacío en caso de fallo externo
             return Collections.emptyList();
+            }
+    }
+
+    @Override
+    public boolean indexProduct(Product product) {
+            if (product == null || product.getId() == null) {
+                return false;
+            }
+
+            var requestPayload = new IndexProductAiRequest(
+                    product.getId(),
+                    product.getName(),
+                    product.getSku(),
+                    product.getDescription()
+            );
+
+            try {
+                aiRestClient.post()
+                        .uri("/api/v1/search/index")
+                        .body(requestPayload)
+                        .retrieve()
+                        .toBodilessEntity();
+                return true;
+            } catch (Exception e) {
+                log.error("Error indexando el producto '{}' en el AI Service", product.getId(), e);
+                return false;
+            }
+    }
+
+    @Override
+    public boolean deleteProductIndex(String productId) {
+            if (productId == null) {
+                return false;
+            }
+
+            try {
+                aiRestClient.delete()
+                        .uri("/api/v1/search/index/{productId}", productId)
+                        .retrieve()
+                        .toBodilessEntity();
+                return true;
+            } catch (Exception e) {
+                log.error("Error eliminando el índice del producto '{}' en el AI Service", productId, e);
+                return false;
             }
     }
 }

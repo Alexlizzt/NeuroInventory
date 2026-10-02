@@ -6,6 +6,7 @@ import com.alexlizzt.inventory_service.domain.exception.CategoryNotFoundExceptio
 import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.model.Category;
 import com.alexlizzt.inventory_service.domain.model.Product;
+import com.alexlizzt.inventory_service.domain.port.AiServicePort;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,9 @@ class UpdateProductServiceTest {
 
     @Mock
     private ProductDtoMapper productDtoMapper;
+
+    @Mock
+    private AiServicePort aiServicePort;
 
     @InjectMocks
     private UpdateProductService updateProductService;

@@ -15,6 +15,7 @@ public interface ProductRepository {
     boolean existsBySku(String sku);
     List<Product> searchByNameAndCategory(String name, String categoryId);
     List<Product> findAllByIds(List<String> ids);
+    List<Product> findAll();
     PageResult<Product> findAllPaged(PageQuery pageQuery);
     void deleteById(String id);
 }

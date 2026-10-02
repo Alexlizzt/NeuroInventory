@@ -12,6 +12,7 @@ import com.alexlizzt.inventory_service.domain.exception.CategoryNotFoundExceptio
 import com.alexlizzt.inventory_service.domain.exception.DuplicateSkuException;
 import com.alexlizzt.inventory_service.domain.model.Product;
 import com.alexlizzt.inventory_service.domain.model.Stock;
+import com.alexlizzt.inventory_service.domain.port.AiServicePort;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 import com.alexlizzt.inventory_service.domain.repository.StockRepository;
@@ -22,16 +23,19 @@ public class CreateProductService implements CreateProductUseCase {
     private final CategoryRepository categoryRepository;
     private final StockRepository stockRepository;
     private final ProductDtoMapper productDtoMapper;
+    private final AiServicePort aiServicePort;
 
     public CreateProductService(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             StockRepository stockRepository,
-            ProductDtoMapper productDtoMapper) {
+            ProductDtoMapper productDtoMapper,
+            AiServicePort aiServicePort) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.stockRepository = stockRepository;
         this.productDtoMapper = productDtoMapper;
+        this.aiServicePort = aiServicePort;
     }
 
     @Override 
@@ -71,7 +75,10 @@ public class CreateProductService implements CreateProductUseCase {
 
         stockRepository.save(initialStock);
 
-        // 5. Retornar DTO de Respuesta
+        // 5. Indexar el producto en el motor de búsqueda semántica (best-effort)
+        aiServicePort.indexProduct(savedProduct);
+
+        // 6. Retornar DTO de Respuesta
         return productDtoMapper.toResponse(savedProduct);
     }
 }

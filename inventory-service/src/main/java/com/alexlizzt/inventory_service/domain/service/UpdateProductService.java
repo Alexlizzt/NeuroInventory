@@ -10,6 +10,7 @@ import com.alexlizzt.inventory_service.application.command.UpdateProductCommand;
 import com.alexlizzt.inventory_service.domain.exception.CategoryNotFoundException;
 import com.alexlizzt.inventory_service.domain.exception.ProductNotFoundException;
 import com.alexlizzt.inventory_service.domain.model.Product;
+import com.alexlizzt.inventory_service.domain.port.AiServicePort;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 
@@ -18,11 +19,13 @@ public class UpdateProductService implements UpdateProductUseCase {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductDtoMapper productDtoMapper;
+    private final AiServicePort aiServicePort;
 
-    public UpdateProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ProductDtoMapper productDtoMapper) {
+    public UpdateProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ProductDtoMapper productDtoMapper, AiServicePort aiServicePort) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productDtoMapper = productDtoMapper;
+        this.aiServicePort = aiServicePort;
     }
 
     @Override 
@@ -52,7 +55,10 @@ public class UpdateProductService implements UpdateProductUseCase {
         // 4. Persistir cambios
         Product updatedProduct = productRepository.save(existingProduct);
 
-        // 5. Retornar DTO mapeado
+        // 5. Reindexar el producto para reflejar los cambios (best-effort)
+        aiServicePort.indexProduct(updatedProduct);
+
+        // 6. Retornar DTO mapeado
         return productDtoMapper.toResponse(updatedProduct);
     }
 }

@@ -35,7 +35,7 @@ public class RagController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<RagResponse> queryRag(@RequestBody RagRequest request) {
         RagResponse response = aiRestClient.post()
-                .uri("/rag/query")
+                .uri("/api/v1/rag/query")
                 .body(request)
                 .retrieve()
                 .body(RagResponse.class);

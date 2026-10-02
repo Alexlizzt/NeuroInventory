@@ -1,6 +1,7 @@
 package com.alexlizzt.inventory_service.infraestructure.web.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import com.alexlizzt.inventory_service.domain.service.CreateProductService;
 import com.alexlizzt.inventory_service.domain.service.DeleteProductService;
 import com.alexlizzt.inventory_service.domain.service.FindProductService;
 import com.alexlizzt.inventory_service.domain.service.ListProductService;
+import com.alexlizzt.inventory_service.domain.service.ReindexProductsService;
 import com.alexlizzt.inventory_service.domain.service.SearchProductsSemanticallyService;
 import com.alexlizzt.inventory_service.domain.service.UpdateProductService;
 import com.alexlizzt.inventory_service.infraestructure.web.dto.request.CreateProductRequest;
@@ -51,6 +53,7 @@ public class ProductController {
     private final UpdateProductService updateProductService;
     private final DeleteProductService deleteProductService;
     private final SearchProductsSemanticallyService searchSemanticallyService;
+    private final ReindexProductsService reindexProductsService;
 
     public ProductController(
             CreateProductService createProductService,
@@ -58,13 +61,15 @@ public class ProductController {
             ListProductService listProductsService,
             UpdateProductService updateProductService,
             DeleteProductService deleteProductService,
-            SearchProductsSemanticallyService searchSemanticallyService) {
+            SearchProductsSemanticallyService searchSemanticallyService,
+            ReindexProductsService reindexProductsService) {
         this.createProductService = createProductService;
         this.findProductService = findProductService;
         this.listProductsService = listProductsService;
         this.updateProductService = updateProductService;
         this.deleteProductService = deleteProductService;
         this.searchSemanticallyService = searchSemanticallyService;
+        this.reindexProductsService = reindexProductsService;
     }
 
     @PostMapping
@@ -153,6 +158,21 @@ public class ProductController {
             @RequestParam String query,
             @RequestParam(defaultValue = "5") int limit) {
         return ResponseEntity.ok(searchSemanticallyService.execute(query, limit));
+    }
+
+    @PostMapping("/reindex")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(
+        summary = "Reindexar productos para búsqueda semántica",
+        description = "Regenera los embeddings de todos los productos existentes en el motor de búsqueda semántica. Útil para migrar catálogos previos a la funcionalidad de IA."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Productos reindexados exitosamente"),
+        @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content)
+    })
+    public ResponseEntity<Map<String, Integer>> reindexProducts() {
+        int indexed = reindexProductsService.execute();
+        return ResponseEntity.ok(Map.of("indexed", indexed));
     }
 
     @PutMapping("/{id}")

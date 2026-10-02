@@ -27,7 +27,7 @@ public class RestClientConfig {
         requestFactory.setConnectTimeout(Duration.ofSeconds(10));
         requestFactory.setReadTimeout(Duration.ofSeconds(180)); // 3 minutos de lectura
 
-        String baseUrl = String.format("http://%s:%s/api/v1/rag", aiServiceHost, aiServicePort);
+        String baseUrl = String.format("http://%s:%s", aiServiceHost, aiServicePort);
 
         return RestClient.builder()
                 .baseUrl(baseUrl)

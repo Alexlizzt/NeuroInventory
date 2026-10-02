@@ -8,6 +8,7 @@ import com.alexlizzt.inventory_service.domain.exception.DuplicateSkuException;
 import com.alexlizzt.inventory_service.domain.model.Category;
 import com.alexlizzt.inventory_service.domain.model.Product;
 import com.alexlizzt.inventory_service.domain.model.Stock;
+import com.alexlizzt.inventory_service.domain.port.AiServicePort;
 import com.alexlizzt.inventory_service.domain.repository.CategoryRepository;
 import com.alexlizzt.inventory_service.domain.repository.ProductRepository;
 import com.alexlizzt.inventory_service.domain.repository.StockRepository;
@@ -40,6 +41,9 @@ class CreateProductServiceTest {
 
     @Mock
     private ProductDtoMapper productDtoMapper;
+
+    @Mock
+    private AiServicePort aiServicePort;
 
     @InjectMocks
     private CreateProductService createProductService;
