@@ -41,6 +41,42 @@ Más detalles en [`docs/architecture/deployment.md`](docs/architecture/deploymen
 
 ---
 
+# 🚀 Inicio Rápido (Getting Started)
+
+1. **Clonar el repositorio:**
+
+   ```bash
+   git clone https://github.com/Alexlizzt/NeuroInventory/
+   cd NeuroInventory
+   ```
+
+2. **Configurar el entorno:**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Revisa y ajusta los valores de `.env` si es necesario.
+
+3. **Levantar todos los servicios:**
+
+   ```bash
+   docker compose up --build
+   ```
+
+4. **Acceder a la plataforma:**
+
+   | Servicio | URL |
+   | --- | --- |
+   | Frontend | http://localhost:4200 |
+   | Inventory Service (API) | http://localhost:8080 |
+   | AI Service (API) | http://localhost:8000 |
+   | Keycloak (admin) | http://localhost:9090 |
+
+> Nota: el primer arranque puede tardar, ya que el servicio `ollama` descarga los modelos `llama3.2` y `nomic-embed-text` durante el build.
+
+---
+
 # ✨ Características principales
 
 ## 📦 Gestión de Inventario (Inventory Management)
