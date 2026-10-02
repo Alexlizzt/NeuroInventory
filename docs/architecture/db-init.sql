@@ -65,21 +65,20 @@ CREATE TABLE inventory_movements (
 -- =========================================================================
 
 -- Tabla: product_embeddings (Embeddings para búsqueda semántica de productos)
+-- Se gestiona desde el AI Service. Sin FK estricta hacia products para
+-- mantener el desacoplamiento entre servicios (la limpieza se hace explícitamente).
 CREATE TABLE product_embeddings (
     product_id VARCHAR(36) PRIMARY KEY,
-    embedding vector(1536), -- Dimensión estándar típica (ej. OpenAI text-embedding-3-small)
+    embedding vector(768), -- Dimensión del modelo de embeddings local (nomic-embed-text)
     metadata JSONB,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_embedding_product FOREIGN KEY (product_id) 
-        REFERENCES products(id) 
-        ON DELETE CASCADE
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabla: document_embeddings (Fragmentos de documentación para RAG)
 CREATE TABLE document_embeddings (
     id VARCHAR(36) PRIMARY KEY,
     content TEXT NOT NULL,
-    embedding vector(1536),
+    embedding vector(768),
     source VARCHAR(255),
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

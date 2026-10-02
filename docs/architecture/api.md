@@ -249,6 +249,46 @@ POST /api/v1/rag/query
 
 El Inventory Service delega estas operaciones al AI Service, manteniendo desacoplada la lógica del dominio.
 
+## Búsqueda semántica de productos
+
+El **AI Service** mantiene los embeddings de los productos en PostgreSQL + pgvector
+(tabla `product_embeddings`, dimensión 768 con el modelo local `nomic-embed-text`).
+
+Endpoints internos del AI Service (protegidos con la cabecera `X-API-KEY`):
+
+```text
+POST   /api/v1/search/index               # Indexa/actualiza el embedding de un producto
+DELETE /api/v1/search/index/{productId}   # Elimina el embedding de un producto
+POST   /api/v1/search/semantic            # Búsqueda por similitud semántica
+```
+
+El **Inventory Service** sincroniza el índice automáticamente:
+
+* Al crear un producto → indexa su embedding.
+* Al actualizar un producto → reindexa su embedding.
+* Al eliminar un producto → elimina su embedding.
+* Al arrancar → reindexa el catálogo existente en segundo plano (best-effort).
+
+El reindexado al arrancar se controla con variables de entorno:
+
+```text
+SEMANTIC_REINDEX_ON_STARTUP=true      # habilita/deshabilita el reindexado inicial
+SEMANTIC_REINDEX_MAX_ATTEMPTS=5       # reintentos mientras el AI Service no esté listo
+SEMANTIC_REINDEX_RETRY_DELAY_MS=5000  # espera entre reintentos
+```
+
+Además expone un endpoint administrativo para backfill del catálogo existente:
+
+```text
+POST /api/v1/inventory-service/products/reindex
+```
+
+Y el endpoint público de búsqueda consumido por el frontend:
+
+```text
+GET /api/v1/inventory-service/products/search/semantic?query=...&limit=5
+```
+
 ---
 
 # Documentación
