@@ -16,25 +16,25 @@ export class CategoryService {
   private http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/categories`;
 
-  getCategories(query: PageQuery = {}): Observable> {
+  getCategories(query: PageQuery = {}): Observable<PageResult<CategoryResponse>> {
     let params = new HttpParams()
       .set('page', (query.page ?? 0).toString())
       .set('size', (query.size ?? 10).toString())
       .set('sortBy', query.sortBy ?? 'name')
       .set('direction', query.direction ?? 'ASC');
 
-    return this.http.get>(this.baseUrl, { params });
+    return this.http.get<PageResult<CategoryResponse>>(this.baseUrl, { params });
   }
 
-  getById(id: string): Observable {
-    return this.http.get(`\({this.baseUrl}/\){id}`);
+  getById(id: string): Observable<CategoryResponse> {
+    return this.http.get<CategoryResponse>(`${this.baseUrl}/${id}`);
   }
 
-  createCategory(request: CreateCategoryRequest): Observable {
-    return this.http.post(this.baseUrl, request);
+  createCategory(request: CreateCategoryRequest): Observable<CategoryResponse> {
+    return this.http.post<CategoryResponse>(this.baseUrl, request);
   }
 
-  updateCategory(id: string, request: UpdateCategoryRequest): Observable {
-    return this.http.put(`\({this.baseUrl}/\){id}`, request);
+  updateCategory(id: string, request: UpdateCategoryRequest): Observable<CategoryResponse> {
+    return this.http.put<CategoryResponse>(`${this.baseUrl}/${id}`, request);
   }
 }

@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
+
+<form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+  <mat-dialog-content class="form-content">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Categoría</mat-label>
+      <mat-select formControlName="categoryId">
+        @for (cat of categories; track cat.id) {
+          <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>SKU</mat-label>
+        <input matInput formControlName="sku" placeholder="EJ: PROD-001" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Precio</mat-label>
+        <input matInput type="number" formControlName="price" prefix="$" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+
+      <textarea matInput formControlName="description" rows="3"></textarea>
+    </mat-form-field>
+
+    @if (!isEditMode) {
+      <div class="row">
+        <mat-form-field appearance="outline">
+          <mat-label>Stock Inicial</mat-label>
+          <input matInput type="number" formControlName="initialStock" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Stock Mínimo</mat-label>
+          <input matInput type="number" formControlName="minStock" />
+        </mat-form-field>
+      </div>
+    }
+
+    @if (isEditMode) {
+      <mat-slide-toggle formControlName="active" color="primary">
+        Producto Activo
+      </mat-slide-toggle>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="productForm.invalid">
+      {{ isEditMode ? 'Actualizar' : 'Guardar' }}
+    </button>
+  </mat-dialog-actions>
+</form>

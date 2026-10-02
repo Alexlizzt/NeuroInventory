@@ -17,37 +17,37 @@ export class ProductService {
   private http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/products`;
 
-  getProducts(query: PageQuery = {}): Observable> {
+  getProducts(query: PageQuery = {}): Observable<PageResult<ProductResponse>> {
     let params = new HttpParams()
       .set('page', (query.page ?? 0).toString())
       .set('size', (query.size ?? 10).toString())
       .set('sortBy', query.sortBy ?? 'name')
       .set('direction', query.direction ?? 'ASC');
 
-    return this.http.get>(this.baseUrl, { params });
+    return this.http.get<PageResult<ProductResponse>>(this.baseUrl, { params });
   }
 
-  getById(id: string): Observable {
-    return this.http.get(`\({this.baseUrl}/\){id}`);
+  getById(id: string): Observable<ProductResponse> {
+    return this.http.get<ProductResponse>(`${this.baseUrl}/${id}`);
   }
 
-  createProduct(request: CreateProductRequest): Observable {
-    return this.http.post(this.baseUrl, request);
+  createProduct(request: CreateProductRequest): Observable<ProductResponse> {
+    return this.http.post<ProductResponse>(this.baseUrl, request);
   }
 
-  updateProduct(id: string, request: UpdateProductRequest): Observable {
-    return this.http.put(`\({this.baseUrl}/\){id}`, request);
+  updateProduct(id: string, request: UpdateProductRequest): Observable<ProductResponse> {
+    return this.http.put<ProductResponse>(`${this.baseUrl}/${id}`, request);
   }
 
-  deleteProduct(id: string): Observable {
-    return this.http.delete(`\({this.baseUrl}/\){id}`);
+  deleteProduct(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
-  searchSemantically(query: string, limit: number = 5): Observable {
+  searchSemantically(query: string, limit: number = 5): Observable<SemanticSearchProductResponse[]> {
     const params = new HttpParams()
       .set('query', query)
       .set('limit', limit.toString());
 
-    return this.http.get(`${this.baseUrl}/search/semantic`, { params });
+    return this.http.get<SemanticSearchProductResponse[]>(`${this.baseUrl}/search/semantic`, { params });
   }
 }

@@ -1,0 +1,114 @@
+<div class="page-title">
+  <h2>Asistente de Inventario IA</h2>
+  <p class="subtitle">Consulta en lenguaje natural y descubre productos por similitud semántica.</p>
+</div>
+
+<mat-tab-group class="tabs-container" animationDuration="0ms">
+
+  <!-- ============================ TAB 1: CHAT RAG ============================ -->
+  <mat-tab label="Chat RAG">
+    <div class="chat-container">
+      <div class="messages-list">
+        @for (msg of messages(); track msg.timestamp) {
+          <div class="message-bubble" [class.user]="msg.sender === 'user'" [class.assistant]="msg.sender === 'assistant'">
+            <div class="avatar">
+              <mat-icon>{{ msg.sender === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+            </div>
+            <div class="content">
+              {{ msg.text }}
+              @if (msg.sources && msg.sources.length > 0) {
+                <div class="sources-box">
+                  <span class="sources-title">Fuentes consultadas:</span>
+                  <div class="chips-container">
+                    @for (src of msg.sources; track src) {
+                      <mat-chip class="source-chip">{{ src }}</mat-chip>
+                    }
+                  </div>
+                </div>
+              }
+              <span class="time">{{ msg.timestamp | date:'HH:mm' }}</span>
+            </div>
+          </div>
+        }
+
+        @if (isChatLoading()) {
+          <div class="chat-loader">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <span>Procesando consulta con LLM...</span>
+          </div>
+        }
+      </div>
+
+      <div class="chat-input-area">
+        <mat-form-field appearance="outline" class="chat-input-field">
+          <mat-label>Pregunta sobre productos, stock o movimientos...</mat-label>
+          <input matInput
+                 [(ngModel)]="chatInput"
+                 (keyup.enter)="sendChatMessage()"
+                 [disabled]="isChatLoading()" />
+        </mat-form-field>
+        <button mat-raised-button color="primary"
+                (click)="sendChatMessage()"
+                [disabled]="isChatLoading() || !chatInput.trim()">
+          <mat-icon>send</mat-icon>
+          Enviar
+        </button>
+      </div>
+    </div>
+  </mat-tab>
+
+  <!-- ====================== TAB 2: BÚSQUEDA SEMÁNTICA ====================== -->
+  <mat-tab label="Búsqueda Semántica">
+    <div class="search-tab-container">
+      <div class="search-bar-box">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Describe el producto por características o concepto...</mat-label>
+          <input matInput
+                 [(ngModel)]="searchInput"
+                 (keyup.enter)="onSemanticSearch()"
+                 [disabled]="isSearchLoading()" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" class="search-btn"
+                (click)="onSemanticSearch()"
+                [disabled]="isSearchLoading() || !searchInput.trim()">
+          <mat-icon>search</mat-icon>
+          Buscar
+        </button>
+      </div>
+
+      @if (isSearchLoading()) {
+        <mat-progress-bar class="search-progress" mode="indeterminate"></mat-progress-bar>
+      }
+
+      <div class="results-grid">
+        @for (item of searchResults(); track item.id) {
+          <mat-card appearance="outlined" class="product-card">
+            <mat-card-header>
+              <mat-card-title>{{ item.name }}</mat-card-title>
+              <mat-card-subtitle>SKU: {{ item.sku }} | {{ item.price | currency }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <p class="description">{{ item.description }}</p>
+              <div class="score-box">
+                <span class="score-label">Coincidencia Semántica:</span>
+                <span class="score-value">{{ (item.score * 100) | number:'1.0-1' }}%</span>
+              </div>
+              @if (item.rationale) {
+                <mat-divider></mat-divider>
+                <p class="rationale">Criterio: {{ item.rationale }}</p>
+              }
+            </mat-card-content>
+          </mat-card>
+        } @empty {
+          @if (!isSearchLoading() && searchInput) {
+            <div class="empty-state">
+              <mat-icon>search_off</mat-icon>
+              <p>No se encontraron coincidencias semánticas similares.</p>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </mat-tab>
+
+</mat-tab-group>

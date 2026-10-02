@@ -1,0 +1,91 @@
+<div class="header-action">
+  <h2>Control de Inventario y Movimientos</h2>
+  <button mat-raised-button color="primary" (click)="openMovementDialog()">
+    <mat-icon>swap_vert</mat-icon> Registrar Movimiento
+  </button>
+</div>
+
+<!-- Selector de Producto y Card de Stock -->
+<div class="filter-card-container">
+  <mat-card class="selector-card mat-elevation-z1">
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Seleccionar Producto</mat-label>
+        <mat-select [(ngModel)]="selectedProductId" (selectionChange)="onProductChange()">
+          @for (prod of products; track prod.id) {
+            <mat-option [value]="prod.id">{{ prod.name }} (SKU: {{ prod.sku }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+
+  @if (stockInfo) {
+    <mat-card class="stock-card mat-elevation-z1" [class.low-stock]="stockInfo.isLowStock">
+      <mat-card-content>
+        <div class="stock-details">
+          <div class="stock-item">
+            <span class="label">Stock Actual</span>
+            <span class="value">{{ stockInfo.quantity }}</span>
+          </div>
+          <div class="stock-item">
+            <span class="label">Stock Mínimo</span>
+            <span class="value">{{ stockInfo.minStock }}</span>
+          </div>
+          <div class="stock-item">
+            <span class="label">Estado</span>
+            <mat-chip-option [selectable]="false" [color]="stockInfo.isLowStock ? 'warn' : 'primary'" selected>
+              {{ stockInfo.isLowStock ? 'Bajo Stock' : 'Suficiente' }}
+            </mat-chip-option>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
+
+<!-- Tabla de Historial -->
+<div class="mat-elevation-z2 table-container">
+  <table mat-table [dataSource]="dataSource">
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef>Tipo</th>
+      <td mat-cell *matCellDef="let element">
+        <span class="type-badge" [ngClass]="element.type.toLowerCase()">
+          {{ element.type }}
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="quantity">
+      <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+      <td mat-cell *matCellDef="let element" class="font-bold">
+        {{ element.type === 'OUT' ? '-' : '+' }}{{ element.quantity }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="reason">
+      <th mat-header-cell *matHeaderCellDef>Motivo / Observación</th>
+      <td mat-cell *matCellDef="let element">{{ element.reason }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="userId">
+      <th mat-header-cell *matHeaderCellDef>Usuario ID</th>
+      <td mat-cell *matCellDef="let element">{{ element.userId }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="createdAt">
+      <th mat-header-cell *matHeaderCellDef>Fecha / Hora</th>
+      <td mat-cell *matCellDef="let element">{{ element.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+  <mat-paginator
+    [length]="totalElements"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 25]"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+</div>
