@@ -30,6 +30,17 @@ El objetivo es demostrar cómo un sistema CRUD tradicional puede evolucionar hac
 
 ---
 
+# ✅ Prerrequisitos
+
+- Docker y Docker Compose.
+- Para inferencia con GPU (servicio Ollama):
+  - Drivers NVIDIA instalados.
+  - `nvidia-container-toolkit`: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+
+Más detalles en [`docs/architecture/deployment.md`](docs/architecture/deployment.md).
+
+---
+
 # ✨ Características principales
 
 ## 📦 Gestión de Inventario (Inventory Management)
