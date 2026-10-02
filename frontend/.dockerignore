@@ -1,0 +1,20 @@
+# Dependencias (se instalan dentro de la imagen con npm ci)
+node_modules
+
+# Salidas de compilación y caché
+dist
+.angular
+out-tsc
+bazel-out
+
+# Control de versiones / editores / sistema
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+coverage
+*.log
+
+# Herramientas locales
+.kilo
