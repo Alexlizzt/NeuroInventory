@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/ai/rag")
@@ -30,6 +31,30 @@ public class RagController {
             @JsonProperty("answer") String answer,
             @JsonProperty("sources") List<String> sources
     ) {}
+
+    public record IngestRequest(
+            @JsonProperty("product_id") String productId,
+            @JsonProperty("content") String content,
+            @JsonProperty("metadata") Map<String, Object> metadata
+    ) {}
+
+    public record IngestResponse(
+            @JsonProperty("status") String status,
+            @JsonProperty("doc_id") String docId,
+            @JsonProperty("chunks_created") int chunksCreated
+    ) {}
+
+    @PostMapping("/documents")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    public ResponseEntity<IngestResponse> ingestDocument(@RequestBody IngestRequest request) {
+        IngestResponse response = aiRestClient.post()
+                .uri("/api/v1/rag/documents")
+                .body(request)
+                .retrieve()
+                .body(IngestResponse.class);
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/query")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
