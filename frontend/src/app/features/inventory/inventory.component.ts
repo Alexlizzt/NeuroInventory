@@ -48,6 +48,7 @@ export class InventoryComponent implements OnInit {
 
   displayedColumns: string[] = ['type', 'quantity', 'reason', 'userId', 'createdAt'];
   dataSource = signal<InventoryMovementResponse[]>([]);
+  private allMovements: InventoryMovementResponse[] = [];
 
   totalElements = signal(0);
   pageSize = 10;
@@ -86,13 +87,14 @@ export class InventoryComponent implements OnInit {
   }
 
   loadMovements(): void {
-    this.inventoryService.getMovementsByProduct(this.selectedProductId, {
-      page: this.pageIndex,
-      size: this.pageSize
-    }).subscribe({
+    this.inventoryService.getMovementsByProduct(this.selectedProductId).subscribe({
       next: (res) => {
-        this.dataSource.set(res.content);
-        this.totalElements.set(res.totalElements);
+        // Orden cronológico: el movimiento más reciente primero
+        this.allMovements = (res ?? []).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        this.totalElements.set(this.allMovements.length);
+        this.applyPagination();
       },
       error: () => this.showSnackBar('Error al cargar el historial de movimientos')
     });
@@ -101,7 +103,12 @@ export class InventoryComponent implements OnInit {
   onPageChange(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
-    this.loadMovements();
+    this.applyPagination();
+  }
+
+  private applyPagination(): void {
+    const start = this.pageIndex * this.pageSize;
+    this.dataSource.set(this.allMovements.slice(start, start + this.pageSize));
   }
 
   openMovementDialog(): void {
