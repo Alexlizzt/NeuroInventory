@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatIconModule } from '@angular/material/icon';
 
 import { CategoryService } from '../../../../core/services/category.service';
 import { CategoryResponse } from '../../../../core/models/category.model';
@@ -27,7 +28,8 @@ export interface ProductDialogData {
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    MatIconModule
   ],
   templateUrl: './product-dialog.component.html',
   styleUrl: './product-dialog.component.scss'
@@ -41,6 +43,20 @@ export class ProductDialogComponent implements OnInit {
   productForm!: FormGroup;
   categories = signal<CategoryResponse[]>([]);
   isEditMode = false;
+
+  manualContent = '';
+  manualFileName = '';
+
+  onManualFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.manualFileName = file.name;
+    const reader = new FileReader();
+    reader.onload = () => (this.manualContent = (reader.result as string) ?? '');
+    reader.readAsText(file);
+  }
 
   ngOnInit(): void {
     this.isEditMode = !!this.data?.product;
@@ -71,7 +87,11 @@ export class ProductDialogComponent implements OnInit {
 
   onSubmit(): void {
     if (this.productForm.invalid) return;
-    this.dialogRef.close(this.productForm.getRawValue());
+    this.dialogRef.close({
+      ...this.productForm.getRawValue(),
+      manualContent: this.manualContent,
+      manualFileName: this.manualFileName
+    });
   }
 
   onCancel(): void {

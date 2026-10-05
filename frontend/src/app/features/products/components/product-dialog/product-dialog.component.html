@@ -53,6 +53,17 @@
         Producto Activo
       </mat-slide-toggle>
     }
+
+    @if (!isEditMode) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Manual relacionado (opcional)</mat-label>
+        <input matInput [value]="manualFileName" placeholder="Archivo de texto (.txt, .md)" readonly />
+        <button mat-icon-button matSuffix type="button" (click)="fileInput.click()" title="Seleccionar archivo">
+          <mat-icon>attach_file</mat-icon>
+        </button>
+        <input #fileInput type="file" accept=".txt,.md,.text" style="display:none" (change)="onManualFileSelected($event)" />
+      </mat-form-field>
+    }
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

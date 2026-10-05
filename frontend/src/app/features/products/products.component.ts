@@ -9,6 +9,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { ProductService } from '../../core/services/product.service';
+import { RagService } from '../../core/services/rag.service';
 import { ProductResponse } from '../../core/models/product.model';
 import { ProductDialogComponent } from './components/product-dialog/product-dialog.component';
 
@@ -32,6 +33,7 @@ export class ProductsComponent implements OnInit {
   private productService = inject(ProductService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
+  private ragService = inject(RagService);
 
   displayedColumns: string[] = ['sku', 'name', 'price', 'active', 'actions'];
   dataSource = signal<ProductResponse[]>([]);
@@ -64,10 +66,21 @@ export class ProductsComponent implements OnInit {
     const dialogRef = this.dialog.open(ProductDialogComponent, { width: '500px' });
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.productService.createProduct(result).subscribe({
-          next: () => {
+        const { manualContent, manualFileName, ...productRequest } = result;
+        this.productService.createProduct(productRequest).subscribe({
+          next: (product) => {
             this.showSnackBar('Producto creado exitosamente');
             this.loadProducts();
+            if (manualContent?.trim()) {
+              this.ragService.ingestDocument({
+                product_id: product.id,
+                content: manualContent,
+                metadata: manualFileName ? { name: manualFileName } : {}
+              }).subscribe({
+                next: () => this.showSnackBar('Manual indexado correctamente'),
+                error: () => this.showSnackBar('Producto creado, pero no se pudo indexar el manual')
+              });
+            }
           },
           error: () => this.showSnackBar('Error al crear el producto')
         });
@@ -83,7 +96,8 @@ export class ProductsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.productService.updateProduct(product.id, result).subscribe({
+        const { manualContent, manualFileName, ...productRequest } = result;
+        this.productService.updateProduct(product.id, productRequest).subscribe({
           next: () => {
             this.showSnackBar('Producto actualizado');
             this.loadProducts();
