@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -34,9 +34,9 @@ export class ProductsComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
 
   displayedColumns: string[] = ['sku', 'name', 'price', 'active', 'actions'];
-  dataSource: ProductResponse[] = [];
+  dataSource = signal<ProductResponse[]>([]);
 
-  totalElements = 0;
+  totalElements = signal(0);
   pageSize = 10;
   pageIndex = 0;
 
@@ -47,8 +47,8 @@ export class ProductsComponent implements OnInit {
   loadProducts(): void {
     this.productService.getProducts({ page: this.pageIndex, size: this.pageSize }).subscribe({
       next: (res) => {
-        this.dataSource = res.content;
-        this.totalElements = res.totalElements;
+        this.dataSource.set(res.content);
+        this.totalElements.set(res.totalElements);
       },
       error: () => this.showSnackBar('Error al cargar productos')
     });

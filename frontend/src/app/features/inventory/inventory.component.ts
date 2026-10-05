@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -42,14 +42,14 @@ export class InventoryComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
-  products: ProductResponse[] = [];
+  products = signal<ProductResponse[]>([]);
   selectedProductId: string = '';
-  stockInfo?: StockResponse;
+  stockInfo = signal<StockResponse | undefined>(undefined);
 
   displayedColumns: string[] = ['type', 'quantity', 'reason', 'userId', 'createdAt'];
-  dataSource: InventoryMovementResponse[] = [];
+  dataSource = signal<InventoryMovementResponse[]>([]);
 
-  totalElements = 0;
+  totalElements = signal(0);
   pageSize = 10;
   pageIndex = 0;
 
@@ -60,9 +60,10 @@ export class InventoryComponent implements OnInit {
   loadProducts(): void {
     this.productService.getProducts({ page: 0, size: 100 }).subscribe({
       next: (res) => {
-        this.products = res.content;
-        if (this.products.length > 0) {
-          this.selectedProductId = this.products[0].id;
+        this.products.set(res.content);
+        const products = this.products();
+        if (products.length > 0) {
+          this.selectedProductId = products[0].id;
           this.onProductChange();
         }
       },
@@ -79,8 +80,8 @@ export class InventoryComponent implements OnInit {
 
   loadStock(): void {
     this.inventoryService.getStock(this.selectedProductId).subscribe({
-      next: (stock) => (this.stockInfo = stock),
-      error: () => (this.stockInfo = undefined)
+      next: (stock) => (this.stockInfo.set(stock)),
+      error: () => (this.stockInfo.set(undefined))
     });
   }
 
@@ -90,8 +91,8 @@ export class InventoryComponent implements OnInit {
       size: this.pageSize
     }).subscribe({
       next: (res) => {
-        this.dataSource = res.content;
-        this.totalElements = res.totalElements;
+        this.dataSource.set(res.content);
+        this.totalElements.set(res.totalElements);
       },
       error: () => this.showSnackBar('Error al cargar el historial de movimientos')
     });
@@ -106,7 +107,7 @@ export class InventoryComponent implements OnInit {
   openMovementDialog(): void {
     const dialogRef = this.dialog.open(MovementDialogComponent, {
       data: {
-        products: this.products,
+        products: this.products(),
         selectedProductId: this.selectedProductId
       }
     });

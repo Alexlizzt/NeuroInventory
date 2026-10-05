@@ -5,7 +5,7 @@
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Categoría</mat-label>
       <mat-select formControlName="categoryId">
-        @for (cat of categories; track cat.id) {
+        @for (cat of categories(); track cat.id) {
           <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
         }
       </mat-select>

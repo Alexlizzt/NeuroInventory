@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -39,7 +39,7 @@ export class ProductDialogComponent implements OnInit {
   public data = inject<ProductDialogData>(MAT_DIALOG_DATA);
 
   productForm!: FormGroup;
-  categories: CategoryResponse[] = [];
+  categories = signal<CategoryResponse[]>([]);
   isEditMode = false;
 
   ngOnInit(): void {
@@ -64,7 +64,7 @@ export class ProductDialogComponent implements OnInit {
 
   private loadCategories(): void {
     this.categoryService.getCategories({ page: 0, size: 100 }).subscribe({
-      next: (res) => (this.categories = res.content),
+      next: (res) => (this.categories.set(res.content)),
       error: (err) => console.error('Error cargando categorías:', err)
     });
   }

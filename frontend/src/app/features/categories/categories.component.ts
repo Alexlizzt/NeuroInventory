@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -32,9 +32,9 @@ export class CategoriesComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
 
   displayedColumns: string[] = ['name', 'description', 'actions'];
-  dataSource: CategoryResponse[] = [];
-  
-  totalElements = 0;
+  dataSource = signal<CategoryResponse[]>([]);
+
+  totalElements = signal(0);
   pageSize = 10;
   pageIndex = 0;
 
@@ -45,8 +45,8 @@ export class CategoriesComponent implements OnInit {
   loadCategories(): void {
     this.categoryService.getCategories({ page: this.pageIndex, size: this.pageSize }).subscribe({
       next: (res) => {
-        this.dataSource = res.content;
-        this.totalElements = res.totalElements;
+        this.dataSource.set(res.content);
+        this.totalElements.set(res.totalElements);
       },
       error: () => this.showSnackBar('Error al cargar categorías')
     });

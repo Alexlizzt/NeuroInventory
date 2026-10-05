@@ -12,7 +12,7 @@
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Seleccionar Producto</mat-label>
         <mat-select [(ngModel)]="selectedProductId" (selectionChange)="onProductChange()">
-          @for (prod of products; track prod.id) {
+          @for (prod of products(); track prod.id) {
             <mat-option [value]="prod.id">{{ prod.name }} (SKU: {{ prod.sku }})</mat-option>
           }
         </mat-select>
@@ -20,22 +20,22 @@
     </mat-card-content>
   </mat-card>
 
-  @if (stockInfo) {
-    <mat-card class="stock-card mat-elevation-z1" [class.low-stock]="stockInfo.isLowStock">
+  @if (stockInfo(); as info) {
+    <mat-card class="stock-card mat-elevation-z1" [class.low-stock]="info.isLowStock">
       <mat-card-content>
         <div class="stock-details">
           <div class="stock-item">
             <span class="label">Stock Actual</span>
-            <span class="value">{{ stockInfo.quantity }}</span>
+            <span class="value">{{ info.quantity }}</span>
           </div>
           <div class="stock-item">
             <span class="label">Stock Mínimo</span>
-            <span class="value">{{ stockInfo.minStock }}</span>
+            <span class="value">{{ info.minStock }}</span>
           </div>
           <div class="stock-item">
             <span class="label">Estado</span>
-            <mat-chip-option [selectable]="false" [color]="stockInfo.isLowStock ? 'warn' : 'primary'" selected>
-              {{ stockInfo.isLowStock ? 'Bajo Stock' : 'Suficiente' }}
+            <mat-chip-option [selectable]="false" [color]="info.isLowStock ? 'warn' : 'primary'" selected>
+              {{ info.isLowStock ? 'Bajo Stock' : 'Suficiente' }}
             </mat-chip-option>
           </div>
         </div>
@@ -46,7 +46,7 @@
 
 <!-- Tabla de Historial -->
 <div class="mat-elevation-z2 table-container">
-  <table mat-table [dataSource]="dataSource">
+  <table mat-table [dataSource]="dataSource()">
     <ng-container matColumnDef="type">
       <th mat-header-cell *matHeaderCellDef>Tipo</th>
       <td mat-cell *matCellDef="let element">
@@ -83,7 +83,7 @@
   </table>
 
   <mat-paginator
-    [length]="totalElements"
+    [length]="totalElements()"
     [pageSize]="pageSize"
     [pageSizeOptions]="[5, 10, 25]"
     (page)="onPageChange($event)">
