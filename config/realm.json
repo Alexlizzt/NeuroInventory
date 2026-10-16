@@ -45,6 +45,17 @@
       "attributes": {
         "pkce.code.challenge.method": "S256"
       }
+    },
+    {
+      "clientId": "mcp-server-client",
+      "description": "Service account client for the MCP Server (autonomous AI agents)",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "serviceAccountsEnabled": true,
+      "secret": "mcp-server-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "authorizationServicesEnabled": true
     }
   ],
   "roles": {
@@ -102,6 +113,17 @@
       ],
       "groups": [
         "Users"
+      ]
+    },
+    {
+      "username": "service-account-mcp-server-client",
+      "email": "mcp-server@neuroinventory.local",
+      "enabled": true,
+      "firstName": "MCP Server",
+      "lastName": "Service Account",
+      "serviceAccountClientId": "mcp-server-client",
+      "realmRoles": [
+        "ROLE_ADMIN"
       ]
     }
   ]
