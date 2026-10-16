@@ -74,7 +74,7 @@ services:
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_USER: ${KC_BOOTSTRAP_ADMIN_USERNAME}
       KEYCLOAK_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
-      IMPORT_PATH: /config
+      IMPORT_FILES_LOCATIONS: /config/*
 
       KEYCLOAK_AVAILABLE_RETRIES: 20
       KEYCLOAK_AVAILABLE_DELAY: 5000
@@ -146,7 +146,30 @@ services:
       - neuroinventory-net
 
   # ==========================================================================
-  # 5. Inventory Service (Spring Boot Backend)
+  # 5. MCP Server (Model Context Protocol - Agentes IA)
+  # ==========================================================================
+  mcp-server:
+    build: ./mcp-server
+    container_name: neuroinventory-mcp-server
+    environment:
+      INVENTORY_SERVICE_URL: http://inventory-service:8080
+      AI_SERVICE_URL: http://ai-service:8000
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: 8001
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-}
+    ports:
+      - "${MCP_SERVER_PORT:-8001}:8001"
+    depends_on:
+      inventory-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # 6. Inventory Service (Spring Boot Backend)
   # ==========================================================================
   inventory-service:
     build: ./inventory-service
