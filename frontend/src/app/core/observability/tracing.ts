@@ -1,19 +1,11 @@
 import {
   WebTracerProvider,
-  ConsoleSpanExporter,
   BatchSpanProcessor,
 } from '@opentelemetry/sdk-trace-web';
 import {
   OTLPTraceExporter,
 } from '@opentelemetry/exporter-trace-otlp-http';
-import {
-  XMLHttpRequestInstrumentation,
-} from '@opentelemetry/instrumentation-xml-http-request';
-import {
-  DocumentLoadInstrumentation,
-} from '@opentelemetry/instrumentation-document-load';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { resourceFromAttributes } from '@opentelemetry/resources';
+import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 const OTLP_ENDPOINT =
@@ -23,7 +15,7 @@ const OTLP_ENDPOINT =
 
 export function initTracing(): void {
   const provider = new WebTracerProvider({
-    resource: resourceFromAttributes({
+    resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: 'neuroinventory-frontend',
       [SemanticResourceAttributes.SERVICE_VERSION]: '0.0.1',
     }),
@@ -36,20 +28,5 @@ export function initTracing(): void {
 
   provider.addSpanProcessor(new BatchSpanProcessor(otlpExporter));
 
-  // Exportador de consola para depuración local (opcional)
-  // provider.addSpanProcessor(new BatchSpanProcessor(new ConsoleSpanExporter()));
-
   provider.register();
-
-  // Instrumentar peticiones XHR (HttpClient de Angular usa XHR por defecto)
-  registerInstrumentations({
-    instrumentations: [
-      new XMLHttpRequestInstrumentation({
-        ignoreUrls: [
-          /^http:\/\/localhost:4200\/assets/,
-        ],
-      }),
-      new DocumentLoadInstrumentation(),
-    ],
-  });
 }
