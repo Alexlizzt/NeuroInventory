@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.security.auth import verify_api_key
 from app.search.semantic import SemanticSearchService
+from app.observability import SEMANTIC_SEARCH_TOTAL
 
 # Router para capacidades de búsqueda semántica (protegido con API Key interna)
 router = APIRouter(
@@ -118,8 +119,10 @@ async def delete_product_index(product_id: str, service: SemanticSearchService =
 async def semantic_search(payload: SemanticSearchRequest, service: SemanticSearchService = Depends(get_search_service)):
     try:
         matches = service.search(query=payload.query, limit=payload.limit)
+        SEMANTIC_SEARCH_TOTAL.labels(status="success").inc()
         return SemanticSearchResponse(matches=matches, interpretedQuery=payload.query)
     except Exception as e:
+        SEMANTIC_SEARCH_TOTAL.labels(status="error").inc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error procesando la búsqueda semántica: {str(e)}",

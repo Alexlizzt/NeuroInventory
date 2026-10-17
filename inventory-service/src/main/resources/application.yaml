@@ -61,7 +61,22 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info # Activa los Actuator endpoints para health checks en Docker
+        include: health, info, metrics, prometheus # Activa Actuator endpoints para observabilidad en Docker
   endpoint:
     health:
       show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Configuración OpenTelemetry para trazas distribuidas
+opentelemetry:
+  traces:
+    exporter: otlp
+  exporter:
+    otlp:
+      traces:
+        endpoint: http://otel-collector:4318
+  service:
+    name: inventory-service

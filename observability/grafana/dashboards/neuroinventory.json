@@ -1,0 +1,124 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "neuroinventory",
+    "title": "NeuroInventory - Observabilidad",
+    "tags": ["neuroinventory", "observability"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "type": "stat",
+        "title": "HTTP Requests/s (Inventory)",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{application=\"inventory-service\"}[1m]))",
+            "legendFormat": "{{status}} {{method}} {{uri}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "req/s",
+            "decimals": 2
+          }
+        },
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 4}
+      },
+      {
+        "type": "stat",
+        "title": "HTTP Requests/s (AI Service)",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{application=\"ai-service\"}[1m]))",
+            "legendFormat": "{{status}} {{method}} {{handler}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "req/s",
+            "decimals": 2
+          }
+        },
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 4}
+      },
+      {
+        "type": "graph",
+        "title": "Duración de peticiones HTTP (Inventory)",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"inventory-service\"}[1m])) by (le, uri))",
+            "legendFormat": "p95 {{uri}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        },
+        "gridPos": {"x": 0, "y": 4, "w": 24, "h": 6}
+      },
+      {
+        "type": "graph",
+        "title": "Errores HTTP (tasa por minuto)",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m]))",
+            "legendFormat": "5xx {{job}}"
+          },
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{status=~\"4..\"}[1m]))",
+            "legendFormat": "4xx {{job}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 10, "w": 24, "h": 5}
+      },
+      {
+        "type": "graph",
+        "title": "Uso de memoria (JVM)",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{application=\"inventory-service\"} / 1024 / 1024",
+            "legendFormat": "{{area}} used (MB)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "decimals": 0
+          }
+        },
+        "gridPos": {"x": 0, "y": 15, "w": 12, "h": 5}
+      },
+      {
+        "type": "graph",
+        "title": "LLM / RAG requests (AI Service)",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(ai_service_rag_queries_total[1m]))",
+            "legendFormat": "RAG queries/min"
+          },
+          {
+            "expr": "sum(rate(ai_service_semantic_search_total[1m]))",
+            "legendFormat": "Semantic searches/min"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 15, "w": 12, "h": 5}
+      }
+    ],
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    }
+  },
+  "overwrite": true
+}

@@ -469,32 +469,32 @@ Roadmap:
 
 ## Fase 1 — Backend Empresarial
 
-- [ ] CRUD de inventario.
-- [ ] Seguridad con Keycloak.
-- [ ] APIs REST.
+- [x] CRUD de inventario.
+- [x] Seguridad con Keycloak.
+- [x] APIs REST.
 
 ---
 
 ## Fase 2 — Búsqueda Semántica
 
-- [ ] Generación de embeddings.
-- [ ] Base de datos vectorial (pgvector).
-- [ ] Descubrimiento semántico de productos.
+- [x] Generación de embeddings.
+- [x] Base de datos vectorial (pgvector).
+- [x] Descubrimiento semántico de productos.
 
 ---
 
 ## Fase 3 — Plataforma RAG
 
-- [ ] Ingesta de documentos y manuales de productos.
-- [ ] Respuestas contextualizadas.
+- [x] Ingesta de documentos y manuales de productos.
+- [x] Respuestas contextualizadas.
 
 ---
 
 ## Fase 4 — Asistente de IA y Agentes
 
-- [ ] Consultas en lenguaje natural.
-- [ ] Integración con LLM local (Ollama).
-- [ ] Servidor MCP y herramientas de dominio.
+- [x] Consultas en lenguaje natural.
+- [x] Integración con LLM local (Ollama).
+- [x] Servidor MCP y herramientas de dominio.
 
 ---
 
@@ -502,7 +502,7 @@ Roadmap:
 - [ ] Integración de Nginx como Reverse Proxy / TLS.
 - [ ] Implementación de API Gateway (Spring Cloud Gateway).
 - [ ] Despliegue en Kubernetes e Ingress.
-- [ ] Observabilidad distribuida.
+- [x] Observabilidad distribuida.
 
 ```mermaid
 graph TD

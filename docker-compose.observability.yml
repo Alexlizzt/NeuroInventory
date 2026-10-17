@@ -1,0 +1,94 @@
+services:
+
+  # ==========================================================================
+  # Variables de entorno para instrumentación OTLP en servicios existentes
+  # ==========================================================================
+  inventory-service:
+    environment:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=inventory-service
+
+  ai-service:
+    environment:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=ai-service
+
+  mcp-server:
+    environment:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=mcp-server
+
+  # ==========================================================================
+  # Observabilidad - OpenTelemetry Collector
+  # ==========================================================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    container_name: neuroinventory-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./observability/otel-collector/config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Prometheus metrics del colector
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # Observabilidad - Alertmanager
+  # ==========================================================================
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: neuroinventory-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./observability/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--web.listen-address=0.0.0.0:9093'
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # Observabilidad - Prometheus
+  # ==========================================================================
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: neuroinventory-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus/alerts.yml:/etc/prometheus/rules/alerts.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.listen-address=0.0.0.0:9090'
+    depends_on:
+      - alertmanager
+    networks:
+      - neuroinventory-net
+
+  # ==========================================================================
+  # Observabilidad - Grafana
+  # ==========================================================================
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: neuroinventory-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - neuroinventory-net
+
+volumes:
+  prometheus_data:
+  grafana_data:

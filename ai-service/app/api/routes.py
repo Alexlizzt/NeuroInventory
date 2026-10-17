@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from pydantic import BaseModel, Field
 
 from app.security.auth import verify_api_key
 from app.embeddings.generator import EmbeddingService
 from app.rag.pipeline import RAGService
+from app.observability import RAG_QUERIES_TOTAL, EMBEDDING_GENERATION_TOTAL
 
 # Aplicamos la protección con API Key a todas las rutas declaradas en este router
 router = APIRouter(
@@ -72,8 +73,10 @@ COMMON_RESPONSES = {
 async def generate_embedding(payload: EmbeddingRequest):
     try:
         vector = embedding_service.generate_embedding(payload.text)
+        EMBEDDING_GENERATION_TOTAL.labels(status="success").inc()
         return EmbeddingResponse(embedding=vector)
     except Exception as e:
+        EMBEDDING_GENERATION_TOTAL.labels(status="error").inc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Error generando embedding: {str(e)}"
@@ -117,8 +120,10 @@ async def query_rag(payload: RAGQueryRequest):
             question=payload.question,
             product_id=payload.product_id
         )
+        RAG_QUERIES_TOTAL.labels(status="success").inc()
         return RAGQueryResponse(answer=answer, sources=sources)
     except Exception as e:
+        RAG_QUERIES_TOTAL.labels(status="error").inc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"Error procesando la consulta RAG: {str(e)}"

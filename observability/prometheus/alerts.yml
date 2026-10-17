@@ -1,0 +1,124 @@
+groups:
+  - name: neuroinventory-services
+    rules:
+      # ---------------------------------------------------------
+      # Servicio caído
+      # ---------------------------------------------------------
+      - alert: ServiceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Servicio {{ $labels.job }} caído"
+          description: "El servicio {{ $labels.job }} ({{ $labels.instance }}) no responde a los scrapes de Prometheus desde hace más de 30 segundos."
+
+      # ---------------------------------------------------------
+      # Alta tasa de errores 5xx (Inventory Service)
+      # ---------------------------------------------------------
+      - alert: HighErrorRateInventory
+        expr: sum(rate(http_server_requests_seconds_count{application="inventory-service",status=~"5.."}[2m])) / sum(rate(http_server_requests_seconds_count{application="inventory-service"}[2m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alta tasa de errores 5xx en Inventory Service"
+          description: "La tasa de errores 5xx es de {{ $value | humanizePercentage }} en los últimos 2 minutos."
+
+      # ---------------------------------------------------------
+      # Alta tasa de errores 5xx (AI Service)
+      # ---------------------------------------------------------
+      - alert: HighErrorRateAIService
+        expr: sum(rate(http_server_requests_seconds_count{application="ai-service",status=~"5.."}[2m])) / sum(rate(http_server_requests_seconds_count{application="ai-service"}[2m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alta tasa de errores 5xx en AI Service"
+          description: "La tasa de errores 5xx es de {{ $value | humanizePercentage }} en los últimos 2 minutos."
+
+      # ---------------------------------------------------------
+      # Latencia p95 alta (Inventory Service)
+      # ---------------------------------------------------------
+      - alert: HighLatencyInventory
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="inventory-service"}[2m])) by (le)) > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 alta en Inventory Service"
+          description: "El percentil 95 de latencia es de {{ $value | humanizeDuration }} segundos."
+
+      # ---------------------------------------------------------
+      # Latencia p95 alta (AI Service)
+      # ---------------------------------------------------------
+      - alert: HighLatencyAIService
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="ai-service"}[2m])) by (le)) > 3
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 alta en AI Service"
+          description: "El percentil 95 de latencia es de {{ $value | humanizeDuration }} segundos."
+
+      # ---------------------------------------------------------
+      # Uso alto de memoria JVM (Inventory Service)
+      # ---------------------------------------------------------
+      - alert: HighJvmMemoryUsage
+        expr: (jvm_memory_used_bytes{application="inventory-service",area="heap"} / jvm_memory_max_bytes{application="inventory-service",area="heap"}) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Uso alto de memoria JVM (Heap) en Inventory Service"
+          description: "El uso de heap es del {{ $value | humanizePercentage }}."
+
+      # ---------------------------------------------------------
+      # Fallas en búsqueda semántica (AI Service)
+      # ---------------------------------------------------------
+      - alert: SemanticSearchFailures
+        expr: sum(rate(ai_service_semantic_search_total{status="error"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fallas en búsqueda semántica"
+          description: "Se detectaron búsquedas semánticas fallidas en el AI Service."
+
+      # ---------------------------------------------------------
+      # Fallas en consultas RAG (AI Service)
+      # ---------------------------------------------------------
+      - alert: RagQueryFailures
+        expr: sum(rate(ai_service_rag_queries_total{status="error"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fallas en consultas RAG"
+          description: "Se detectaron consultas RAG fallidas en el AI Service."
+
+      # ---------------------------------------------------------
+      # Fallas en generación de embeddings (AI Service)
+      # ---------------------------------------------------------
+      - alert: EmbeddingGenerationFailures
+        expr: sum(rate(ai_service_embedding_generation_total{status="error"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fallas en generación de embeddings"
+          description: "Se detectaron fallas al generar embeddings en el AI Service."
+
+  - name: neuroinventory-infrastructure
+    rules:
+      # ---------------------------------------------------------
+      # Prometheus no scrapeando targets
+      # ---------------------------------------------------------
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target de Prometheus ausente"
+          description: "El target {{ $labels.job }} / {{ $labels.instance }} no está siendo scrapeado."

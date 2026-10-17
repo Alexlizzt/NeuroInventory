@@ -12,3 +12,9 @@ langchain-community>=0.0.10
 langchain-postgres>=0.0.1
 python-jose[cryptography]>=0.3.0
 httpx>=0.27.0
+
+# Observabilidad: OpenTelemetry y métricas Prometheus
+opentelemetry-distro
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-instrumentation-fastapi
+prometheus-client

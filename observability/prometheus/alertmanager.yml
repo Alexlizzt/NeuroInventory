@@ -1,0 +1,31 @@
+global:
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'alertmanager@neuroinventory.local'
+
+route:
+  receiver: 'neuroinventory-team'
+  group_by: ['alertname', 'job', 'instance']
+  group_wait: 30s
+  group_interval: 1m
+  repeat_interval: 4h
+
+receivers:
+  - name: 'neuroinventory-team'
+    # Para desarrollo local, las alertas se imprimen en los logs de Alertmanager.
+    # En producción, configura un receptor real (email, Slack, PagerDuty, etc.).
+    # Ejemplo de email (descomenta y configura SMTP):
+    # email_configs:
+    #   - to: 'devops@neuroinventory.local'
+    #     subject: '[NeuroInventory] Alerta: {{ .GroupLabels.alertname }}'
+    #     body: |
+    #       Alerta: {{ .CommonLabels.alertname }}
+    #       Descripción: {{ CommonAnnotations.description }}
+    #       Servicio: {{ CommonLabels.job }}
+    #       Instancia: {{ CommonLabels.instance }}
+    #
+    # Ejemplo de Slack (descomenta y configura webhook):
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/XXX/YYY/ZZZ'
+    #     channel: '#alerts-neuroinventory'
+    #     title: '[NeuroInventory] {{ .CommonLabels.alertname }}'
+    #     text: '{{ CommonAnnotations.description }}'

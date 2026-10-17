@@ -244,6 +244,16 @@ curl http://localhost:9090/realms/neuroinventory
 4. `docker compose up --build`
 5. Accede a `http://localhost:4200` (frontend) y prueba el flujo completo.
 
+### Levantar observabilidad (OpenTelemetry + Prometheus + Grafana)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.observability.yml up --build
+```
+
+Luego accede a:
+- **Grafana**: http://localhost:3000 (admin / admin)
+- **Prometheus**: http://localhost:9090
+
 ---
 
 ## 🔄 Generación y rotación automática de `SERVICE_TOKEN`
