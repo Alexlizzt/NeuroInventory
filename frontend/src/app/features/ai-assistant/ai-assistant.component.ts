@@ -93,8 +93,17 @@ export class AiAssistantComponent {
         ]);
         this.isChatLoading.set(false);
       },
-      error: () => {
-        this.snackBar.open('Error al consultar el asistente RAG', 'Cerrar', { duration: 3000 });
+      error: (err) => {
+        const errorMessage = err?.error?.error || err?.error?.detail || 'El servicio de IA no está disponible en este momento.';
+        const userFriendlyMessage = `⚠️ Lo siento, no pude procesar tu consulta.\n\nDetalle: ${errorMessage}`;
+        this.messages.update(msgs => [
+          ...msgs,
+          {
+            sender: 'assistant',
+            text: userFriendlyMessage,
+            timestamp: new Date()
+          }
+        ]);
         this.isChatLoading.set(false);
       }
     });
@@ -111,8 +120,19 @@ export class AiAssistantComponent {
         this.searchResults.set(results);
         this.isSearchLoading.set(false);
       },
-      error: () => {
-        this.snackBar.open('Error al ejecutar la búsqueda semántica', 'Cerrar', { duration: 3000 });
+      error: (err) => {
+        const errorMessage = err?.error?.error || err?.error?.detail || 'El servicio de búsqueda no está disponible en este momento.';
+        this.searchResults.set([{
+          id: 'ERROR',
+          categoryId: '',
+          sku: 'ERROR',
+          name: 'Error',
+          description: errorMessage,
+          price: 0,
+          active: false,
+          score: 0,
+          rationale: `⚠️ ${errorMessage}`
+        }]);
         this.isSearchLoading.set(false);
       }
     });
