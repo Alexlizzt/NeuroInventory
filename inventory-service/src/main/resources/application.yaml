@@ -69,14 +69,3 @@ management:
     export:
       prometheus:
         enabled: true
-
-# Configuración OpenTelemetry para trazas distribuidas
-opentelemetry:
-  traces:
-    exporter: otlp
-  exporter:
-    otlp:
-      traces:
-        endpoint: http://otel-collector:4318
-  service:
-    name: inventory-service

@@ -28,9 +28,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
 
-	// Observabilidad: métricas Prometheus y trazas OpenTelemetry
+	// Observabilidad: métricas Prometheus
 	implementation("io.micrometer:micrometer-registry-prometheus")
-	implementation("io.opentelemetry:opentelemetry-spring-boot-starter:1.37.0")
 
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.mapstruct:mapstruct:1.6.3")
