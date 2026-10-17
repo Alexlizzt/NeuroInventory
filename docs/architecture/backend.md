@@ -298,7 +298,6 @@ La arquitectura permite evolucionar sin modificar el dominio principal.
 Las principales líneas de crecimiento previstas son:
 
 * Incorporación de mensajería basada en eventos.
-* Integración con un API Gateway.
 * Despliegue de múltiples instancias del servicio.
 * Observabilidad distribuida.
 * Publicación de eventos de dominio.

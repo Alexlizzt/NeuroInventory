@@ -188,7 +188,6 @@ La arquitectura está diseñada para crecer de manera incremental.
 * Incorporación de búsqueda semántica.
 * Integración de RAG.
 * Automatización mediante agentes de IA.
-* API Gateway.
 * Despliegue en Kubernetes.
 * Observabilidad distribuida.
 * Integración mediante MCP.

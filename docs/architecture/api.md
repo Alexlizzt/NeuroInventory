@@ -313,7 +313,6 @@ Las APIs están diseñadas para crecer sin romper compatibilidad con los consumi
 
 Las futuras versiones podrán incorporar:
 
-* API Gateway.
 * Rate limiting.
 * Versionado avanzado.
 * Webhooks.
