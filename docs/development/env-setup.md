@@ -12,7 +12,7 @@ Desde la raíz del repositorio:
 cp .env.example .env
 ```
 
-El archivo `.env.example` ya contiene todos los valores por defecto para desarrollo local. Solo necesitas ajustar lo que sea necesario y, sobre todo, **generar el `SERVICE_TOKEN`** si vas a usar el MCP Server como agente autónomo.
+El archivo `.env.example` ya contiene todos los valores por defecto para desarrollo local. Solo necesitas ajustar lo que sea necesario y, sobre todo, **generar el `SERVICE_TOKEN`** si vas a usar el MCP Server.
 
 > ⚠️ Nunca subas el archivo `.env` a control de versiones. Está incluido en `.gitignore`.
 
@@ -165,7 +165,7 @@ INTERNAL_API_KEY=neuroinventory-secret-key-2026
 # MCP Server
 # ============================================================================
 MCP_SERVER_PORT=8001
-SERVICE_TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6IC...
+SERVICE_TOKEN=
 
 # ============================================================================
 # Inventory Service
@@ -177,26 +177,35 @@ SPRING_DATASOURCE_PASSWORD=secretpassword
 BASE_PROBLEM_URI=http://localhost:8080/problem
 SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:9090/realms/neuroinventory
 SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/neuroinventory/protocol/openid-connect/certs
+
+# ============================================================================
+# Observabilidad (OpenTelemetry)
+# ============================================================================
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318
+OTEL_SERVICE_NAME=neuroinventory
 ```
 
 ---
 
 ## 4. Levantar todos los servicios
 
+Desde la raíz del proyecto:
+
 ```bash
-# Desde la raíz del proyecto
 docker compose up --build
 ```
 
-### URLs de acceso una vez levantado
+### URLs de acceso una vez levantado (desarrollo directo)
 
 | Servicio | URL |
 |----------|-----|
-| Frontend | http://localhost:4200 |
-| Inventory Service (API) | http://localhost:8080 |
+| Frontend Angular | http://localhost:4200 |
+| Inventory Service (API) | http://localhost:8080/api/v1/inventory-service |
 | AI Service (API) | http://localhost:8000 |
 | MCP Server (SSE) | http://localhost:8001/sse |
 | Keycloak (admin) | http://localhost:9090 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 (admin / admin) |
 
 ---
 
@@ -206,10 +215,8 @@ docker compose up --build
 # Health checks
 curl http://localhost:8080/actuator/health          # Inventory Service
 curl http://localhost:8000/health                    # AI Service
-curl http://localhost:8001/sse                       # MCP Server (SSE)
-
-# Keycloak realm importado
-curl http://localhost:9090/realms/neuroinventory
+curl http://localhost:8001/sse                       # MCP Server
+curl http://localhost:9090/realms/neuroinventory     # Keycloak
 ```
 
 ---
@@ -236,7 +243,7 @@ curl http://localhost:9090/realms/neuroinventory
 
 ---
 
-## Resumen rápido para el desarrollador
+## 8. Resumen rápido para el desarrollador
 
 1. `cp .env.example .env`
 2. (Opcional) Ajusta contraseñas y puertos si es necesario.
@@ -253,63 +260,3 @@ docker compose -f docker-compose.yml -f docker-compose.observability.yml up --bu
 Luego accede a:
 - **Grafana**: http://localhost:3000 (admin / admin)
 - **Prometheus**: http://localhost:9090
-
----
-
-## 🔄 Generación y rotación automática de `SERVICE_TOKEN`
-
-Como `SERVICE_TOKEN` es una variable de entorno de Docker Compose, cualquier cambio en `.env` requiere reiniciar el contenedor `mcp-server` para que surta efecto. Para facilitar esto, se incluye un script que genera el token y lo escribe en `.env` automáticamente.
-
-### Script: `scripts/generate-service-token.sh`
-
-```bash
-# Solo generar el token y escribirlo en .env (sin reiniciar contenedores)
-./scripts/generate-service-token.sh
-
-# Generar el token y reiniciar solo mcp-server para aplicarlo inmediatamente
-./scripts/generate-service-token.sh --apply
-```
-
-**Qué hace el script:**
-
-1. Llama a Keycloak con **Client Credentials** usando el cliente `mcp-server-client` y su secreto (`mcp-server-secret`).
-2. Extrae el `access_token` de la respuesta JSON.
-3. Sobreescribe la línea `SERVICE_TOKEN=` en tu archivo `.env` con el nuevo valor.
-4. (Opcional, con `--apply`) Reinicia únicamente el servicio `mcp-server` con `docker compose up -d --build mcp-server`, sin afectar al resto del stack.
-
-### Rotación programada (cron)
-
-Los JWT de Keycloak expiran (por defecto a los 300 segundos en este entorno de desarrollo). Si usas el MCP Server como agente autónomo de larga duración, puedes rotar el token periódicamente con `cron`:
-
-```bash
-# Ejemplo: rotar cada 4 minutos (margen de seguridad antes de los 300s)
-*/4 * * * * /ruta/al/proyecto/scripts/generate-service-token.sh --apply >> /var/log/mcp-token-rotation.log 2>&1
-```
-
-> ⚠️ Mientras el token esté vigente, no hace falta rotarlo. El `inventory-service` valida la firma del JWT en cada petición; si expira, devolverá **401 Unauthorized** y el MCP Server dejará de poder ejecutar `consultar_stock` y `crear_movimiento` como servicio autónomo.
-
-### Verificar que el token sigue vigente
-
-```bash
-# Decodificar el payload del JWT (sin verificar firma, solo para inspeccionar expiración)
-python3 -c "
-import json, base64, sys
-token = open('.env').read().split('SERVICE_TOKEN=')[1].strip().splitlines()[0]
-payload = token.split('.')[1]
-# Añadir padding si falta
-payload += '=' * (-len(payload) % 4)
-data = json.loads(base64.urlsafe_b64decode(payload))
-print('Expira en:', data.get('exp'), '(timestamp UNIX)')
-print('Cliente:', data.get('azp'))
-"
-```
-
-### Troubleshooting del script
-
-| Síntoma | Causa probable | Solución |
-|---------|---------------|----------|
-| `curl: (7) Failed to connect to localhost port 9090` | Keycloak no está levantado | `docker compose up -d keycloak` |
-| `{"error":"unauthorized_client",...}` | El cliente no tiene service accounts habilitados | Verifica `config/realm.json`: `"serviceAccountsEnabled": true` |
-| `sed: ... Invalid command` | Problema con caracteres especiales en el token | El script ya usa `python3` para extraer el token limpio; si falla, edita `.env` manualmente |
-| `mcp-server` sigue fallando con 401 después de `--apply` | El contenedor no tomó el nuevo `.env` | Asegúrate de usar `docker compose up -d --build mcp-server` (no solo `restart`) |
-
