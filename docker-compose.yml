@@ -193,8 +193,9 @@ services:
         condition: service_started
     networks:
       - neuroinventory-net
+
   # ==========================================================================
-  # 6. Frontend Angular
+  # 7. Frontend Angular
   # ==========================================================================
   frontend:
     build:
