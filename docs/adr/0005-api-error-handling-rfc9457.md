@@ -282,7 +282,6 @@ Esta decisión permite incorporar:
 * Catálogo centralizado de errores.
 * Documentación automática mediante OpenAPI.
 * Correlación de errores mediante trazas distribuidas.
-* Manejo uniforme en API Gateway.
 * Exposición segura de errores a agentes IA.
 
 ---
