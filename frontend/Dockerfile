@@ -6,7 +6,7 @@ ENV NG_CLI_ANALYTICS=false
 
 COPY package*.json ./
 
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 COPY . .
 
