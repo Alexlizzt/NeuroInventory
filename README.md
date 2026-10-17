@@ -499,8 +499,6 @@ Roadmap:
 ---
 
 ## Fase 5 — Infraestructura y Producción Avanzada
-- [ ] Integración de Nginx como Reverse Proxy / TLS.
-- [ ] Implementación de API Gateway (Spring Cloud Gateway).
 - [ ] Despliegue en Kubernetes e Ingress.
 - [x] Observabilidad distribuida.
 
@@ -516,10 +514,6 @@ graph TD
     %% Componentes
     FE["Frontend<br>Angular + TS"]:::frontend
 
-    Nginx["Nginx<br>Reverse Proxy / TLS"]:::proxy
-
-    Gateway["API Gateway<br>Spring Cloud Gateway"]:::gateway
-
     Inventory["Inventory Service<br>Spring Boot"]:::service
 
     AI["AI Service<br>FastAPI<br>LlamaIndex<br>Embeddings<br>Ollama"]:::service
@@ -529,12 +523,10 @@ graph TD
     DB[("PostgreSQL + pgvector")]:::db
 
     %% Flujo
-    FE --> Nginx
-    Nginx --> Gateway
+    FE --> Inventory
 
-    Gateway --> Inventory
-    Gateway --> AI
-    Gateway --> Keycloak
+    Inventory --> AI
+    Inventory --> Keycloak
 
     Inventory --> DB
 ```
