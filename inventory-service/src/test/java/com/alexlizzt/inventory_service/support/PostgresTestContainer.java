@@ -1,5 +1,7 @@
 package com.alexlizzt.inventory_service.support;
 
+import java.time.Duration;
+
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
@@ -14,7 +16,10 @@ public final class PostgresTestContainer {
     private static final PostgreSQLContainer<?> INSTANCE = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("inventory_test_db")
             .withUsername("test_user")
-            .withPassword("test_password");
+            .withPassword("test_password")
+            // initdb puede tardar más de 60 s en máquinas cargadas (CI que
+            // compila imágenes o instala dependencias en paralelo).
+            .withStartupTimeout(Duration.ofMinutes(3));
 
     static {
         INSTANCE.start();
