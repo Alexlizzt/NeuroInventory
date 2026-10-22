@@ -1,0 +1,71 @@
+# =============================================================================
+# Configuración como código (JCasC) del Jenkins de NeuroInventory.
+#
+# Las variables ${...} se resuelven desde el entorno del contenedor, que
+# docker-compose.jenkins.yml define con valores por defecto. No se admiten
+# valores vacíos: si arrancas la imagen con `docker run`, exporta todas las
+# variables antes de hacerlo.
+# =============================================================================
+
+jenkins:
+  systemMessage: |
+    NeuroInventory · Integración continua
+    Backend Spring Boot · Frontend Angular · AI Service · MCP Server
+
+  numExecutors: 2
+  mode: NORMAL
+  scmCheckoutRetryCount: 3
+  quietPeriod: 5
+  slaveAgentPort: 50000
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+unclassified:
+  location:
+    url: "${JENKINS_URL}"
+    adminAddress: "ci@neuroinventory.local"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # Token de Docker Hub usado por la etapa "Publicar imágenes".
+          # Se aplica en cada arranque a partir de las variables de entorno.
+          - usernamePassword:
+              scope: GLOBAL
+              id: "dockerhub"
+              description: "Docker Hub · NeuroInventory"
+              username: "${DOCKERHUB_USERNAME}"
+              password: "${DOCKERHUB_TOKEN}"
+
+jobs:
+  - script: |
+      pipelineJob('neuroinventory-ci') {
+        description('CI de NeuroInventory: pruebas de backend, build de frontend, tests de IA y construcción de imágenes Docker.')
+        triggers {
+          scm('H/10 * * * *')
+        }
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${GIT_REPO_URL}')
+                }
+                branch('*/${GIT_BRANCH}')
+              }
+            }
+            scriptPath('Jenkinsfile')
+            lightweight(true)
+          }
+        }
+      }

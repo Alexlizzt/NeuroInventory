@@ -1,0 +1,17 @@
+# Contexto raíz: usado por la imagen de Jenkins (docker/jenkins/Dockerfile).
+# Los builds de cada servicio usan su propio .dockerignore.
+
+.git
+.kilo
+.vscode
+
+**/node_modules
+**/dist
+**/build
+**/.gradle
+**/.venv
+**/__pycache__
+**/*.pyc
+
+.env
+.env.jenkins

@@ -1,0 +1,71 @@
+# =============================================================================
+# Jenkins de CI para NeuroInventory
+#
+# Es independiente de docker-compose.yml (la plataforma): solo levanta Jenkins
+# y reutiliza el daemon de Docker del host para Testcontainers y para construir
+# las imágenes de los servicios.
+#
+#   docker compose -f docker-compose.jenkins.yml up -d --build
+#
+# Acceso: http://localhost:8085  (credenciales en JENKINS_ADMIN_*)
+# =============================================================================
+
+name: neuroinventory-jenkins
+
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: docker/jenkins/Dockerfile
+    image: neuroinventory/jenkins:local
+    container_name: neuroinventory-jenkins
+    restart: unless-stopped
+
+    # El socket de Docker ya concede acceso root-equivalente al host, así que
+    # ejecutar como root evita problemas de GID con el socket y con las cachés
+    # de Gradle/npm/pip. Si prefieres el usuario `jenkins`, añade:
+    #   group_add: ["<GID de /var/run/docker.sock>"]
+    user: root
+
+    ports:
+      - "${JENKINS_PORT:-8085}:8080"
+      - "${JENKINS_AGENT_PORT:-50000}:50000"
+
+    environment:
+      JENKINS_URL: "http://localhost:${JENKINS_PORT:-8085}/"
+      JENKINS_ADMIN_ID: "${JENKINS_ADMIN_ID:-admin}"
+      JENKINS_ADMIN_PASSWORD: "${JENKINS_ADMIN_PASSWORD:-admin}"
+
+      # Job que crea JCasC al arrancar.
+      GIT_REPO_URL: "${GIT_REPO_URL:-https://github.com/Alexlizzt/NeuroInventory.git}"
+      GIT_BRANCH: "${GIT_BRANCH:-main}"
+
+      # Credencial `dockerhub` para publicar imágenes.
+      DOCKERHUB_USERNAME: "${DOCKERHUB_USERNAME:-neuroinventory}"
+      DOCKERHUB_TOKEN: "${DOCKERHUB_TOKEN:-changeme}"
+
+      # Testcontainers: los contenedores se crean en el daemon del host y el
+      # JVM de las pruebas los alcanza por el gateway de Docker.
+      TESTCONTAINERS_HOST_OVERRIDE: "host.docker.internal"
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false -Duser.timezone=UTC"
+
+    # Permite que Testcontainers llegue a los puertos publicados en el host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/login >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+
+volumes:
+  jenkins_home:

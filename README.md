@@ -451,6 +451,22 @@ Incluye:
 
 ---
 
+# 🔁 Integración Continua (Jenkins)
+
+El repositorio incluye un Jenkins aislado para ejecutar la pipeline completa
+(pruebas de backend con Testcontainers, build del frontend, tests de IA y
+construcción de imágenes):
+
+```bash
+cp .env.jenkins.example .env.jenkins
+docker compose -f docker-compose.jenkins.yml --env-file .env.jenkins up -d --build
+```
+
+Disponible en <http://localhost:8085> con el job `neuroinventory-ci` ya
+configurado. Guía completa: [`docs/development/jenkins.md`](docs/development/jenkins.md).
+
+---
+
 # 📊 Observabilidad
 
 Implementado:
