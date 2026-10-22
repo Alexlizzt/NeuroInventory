@@ -5,6 +5,7 @@ Servicio principal del dominio construido con **Java 21** y **Spring Boot 4**.
 Responsabilidades:
 
 - Productos, categorías, stock y movimientos de inventario.
+- Reportes analíticos del inventario (resumen, valoración, series temporales, stock bajo).
 - Seguridad (OAuth2 Resource Server con Keycloak).
 - APIs REST.
 

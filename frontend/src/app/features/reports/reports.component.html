@@ -1,0 +1,492 @@
+<div class="reports">
+  <header class="reports-header">
+    <div>
+      <h2>Reportes avanzados</h2>
+      <p class="subtitle">Analítica detallada del inventario con filtros y exportación a CSV</p>
+    </div>
+
+    <button mat-stroked-button color="primary" (click)="applyFilters()">
+      <mat-icon>refresh</mat-icon> Actualizar
+    </button>
+  </header>
+
+  <mat-card class="filters-panel">
+    <mat-card-content>
+      <div class="filters">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Desde</mat-label>
+          <input
+            matInput
+            type="date"
+            [value]="from() ?? ''"
+            (change)="onDateChange('from', $event)"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Hasta</mat-label>
+          <input matInput type="date" [value]="to() ?? ''" (change)="onDateChange('to', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Granularidad</mat-label>
+          <mat-select [value]="granularity()" (selectionChange)="onGranularityChange($event.value)">
+            @for (option of granularities; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Tipo de movimiento</mat-label>
+          <mat-select
+            [value]="movementType()"
+            (selectionChange)="onMovementTypeChange($event.value)"
+          >
+            @for (option of movementTypes; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Categoría</mat-label>
+          <mat-select [value]="categoryId()" (selectionChange)="onCategoryChange($event.value)">
+            <mat-option [value]="null">Todas</mat-option>
+            @for (category of categories(); track category.id) {
+              <mat-option [value]="category.id">{{ category.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Métrica</mat-label>
+          <mat-select [value]="metric()" (selectionChange)="onMetricChange($event.value)">
+            @for (option of metrics; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Límite</mat-label>
+          <mat-select [value]="limit()" (selectionChange)="onLimitChange($event.value)">
+            @for (option of limitOptions; track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-button color="accent" (click)="clearFilters()">
+          <mat-icon>filter_alt_off</mat-icon> Limpiar
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  @if (errorMessage(); as message) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ message }}</span>
+    </div>
+  }
+
+  <mat-tab-group
+    class="reports-tabs"
+    [selectedIndex]="tabIndex()"
+    (selectedIndexChange)="onTabChange($event)"
+  >
+    <!-- Resumen -->
+    <mat-tab label="Resumen">
+      <div class="tab-content">
+        @if (loading()) {
+          <div class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+        } @else {
+          @if (summary(); as data) {
+            <div class="kpi-grid">
+              <div class="summary-item">
+                <span class="summary-label">Productos activos</span>
+                <span class="summary-value">{{ data.activeProducts }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Unidades en stock</span>
+                <span class="summary-value">{{ data.totalUnits }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Valor del inventario</span>
+                <span class="summary-value">{{ formatCurrency(data.inventoryValue) }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Entradas / Salidas (ud.)</span>
+                <span class="summary-value">
+                  {{ data.inboundUnits }} / {{ data.outboundUnits }}
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Stock bajo</span>
+                <span class="summary-value warning">{{ data.lowStockProducts }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Sin existencias</span>
+                <span class="summary-value danger">{{ data.outOfStockProducts }}</span>
+              </div>
+            </div>
+          }
+
+          <mat-card class="panel">
+            <mat-card-header>
+              <mat-card-title>Evolución de movimientos</mat-card-title>
+              <mat-card-subtitle>Unidades por período</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <app-line-chart [labels]="timeseriesLabels()" [series]="timeseriesSeries()" />
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="panel">
+            <mat-card-header>
+              <mat-card-title>Valoración por categoría</mat-card-title>
+              <mat-card-subtitle>Participación de cada categoría en el valor total</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <app-donut-chart
+                [segments]="categorySegments()"
+                centerLabel="Valor total"
+                [centerValueFormatter]="formatCurrency"
+                [legendValueFormatter]="formatCurrency"
+              />
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Valoración -->
+    <mat-tab label="Valoración">
+      <div class="tab-content">
+        @if (loading()) {
+          <div class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+        } @else {
+          <mat-card class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Detalle por categoría</h3>
+                <p>{{ valuation().length }} categorías analizadas</p>
+              </div>
+              <button mat-stroked-button color="primary" (click)="exportValuation()">
+                <mat-icon>download</mat-icon> Exportar CSV
+              </button>
+            </div>
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="valuation()">
+                  <ng-container matColumnDef="categoryName">
+                    <th mat-header-cell *matHeaderCellDef>Categoría</th>
+                    <td mat-cell *matCellDef="let element">{{ element.categoryName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="productCount">
+                    <th mat-header-cell *matHeaderCellDef>Productos</th>
+                    <td mat-cell *matCellDef="let element">{{ element.productCount }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="totalUnits">
+                    <th mat-header-cell *matHeaderCellDef>Unidades</th>
+                    <td mat-cell *matCellDef="let element">{{ element.totalUnits }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="totalValue">
+                    <th mat-header-cell *matHeaderCellDef>Valor</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ formatCurrency(element.totalValue) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="percentage">
+                    <th mat-header-cell *matHeaderCellDef>Participación</th>
+                    <td mat-cell *matCellDef="let element">
+                      <div class="progress-cell">
+                        <div class="progress-bar">
+                          <div class="progress-fill" [style.width.%]="element.percentage"></div>
+                        </div>
+                        <span>{{ element.percentage | number: '1.1-1' }}%</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="lowStockCount">
+                    <th mat-header-cell *matHeaderCellDef>Stock bajo</th>
+                    <td mat-cell *matCellDef="let element">{{ element.lowStockCount }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="valuationColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: valuationColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Movimientos -->
+    <mat-tab label="Movimientos">
+      <div class="tab-content">
+        @if (loading()) {
+          <div class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+        } @else {
+          <mat-card class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Detalle de movimientos</h3>
+                <p>{{ movements().length }} registros encontrados</p>
+              </div>
+              <button mat-stroked-button color="primary" (click)="exportMovements()">
+                <mat-icon>download</mat-icon> Exportar CSV
+              </button>
+            </div>
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="movements()">
+                  <ng-container matColumnDef="createdAt">
+                    <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                    <td mat-cell *matCellDef="let element">{{ element.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="sku">
+                    <th mat-header-cell *matHeaderCellDef>SKU</th>
+                    <td mat-cell *matCellDef="let element">{{ element.sku }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="productName">
+                    <th mat-header-cell *matHeaderCellDef>Producto</th>
+                    <td mat-cell *matCellDef="let element">{{ element.productName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="categoryName">
+                    <th mat-header-cell *matHeaderCellDef>Categoría</th>
+                    <td mat-cell *matCellDef="let element">{{ element.categoryName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                    <td mat-cell *matCellDef="let element">
+                      <mat-chip-option
+                        [selectable]="false"
+                        [color]="element.type === 'IN' ? 'primary' : element.type === 'OUT' ? 'warn' : 'accent'"
+                        selected
+                      >
+                        {{ movementTypeLabel(element.type) }}
+                      </mat-chip-option>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="quantity">
+                    <th mat-header-cell *matHeaderCellDef>Cantidad</th>
+                    <td mat-cell *matCellDef="let element">{{ element.quantity }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="totalValue">
+                    <th mat-header-cell *matHeaderCellDef>Valor</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ formatCurrency(element.totalValue) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="reason">
+                    <th mat-header-cell *matHeaderCellDef>Motivo</th>
+                    <td mat-cell *matCellDef="let element">{{ element.reason || '—' }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="movementColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: movementColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="panel">
+            <mat-card-header>
+              <mat-card-title>Evolución por período</mat-card-title>
+              <mat-card-subtitle>Entradas y salidas agregadas</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <app-line-chart [labels]="timeseriesLabels()" [series]="timeseriesSeries()" />
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Top productos -->
+    <mat-tab label="Top productos">
+      <div class="tab-content">
+        @if (loading()) {
+          <div class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+        } @else {
+          <mat-card class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Productos destacados</h3>
+                <p>
+                  {{ metric() === 'MOVEMENT' ? 'Ranking por número de movimientos' : 'Ranking por valor en inventario' }}
+                </p>
+              </div>
+              <button mat-stroked-button color="primary" (click)="exportTopProducts()">
+                <mat-icon>download</mat-icon> Exportar CSV
+              </button>
+            </div>
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="topProducts()">
+                  <ng-container matColumnDef="sku">
+                    <th mat-header-cell *matHeaderCellDef>SKU</th>
+                    <td mat-cell *matCellDef="let element">{{ element.sku }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="productName">
+                    <th mat-header-cell *matHeaderCellDef>Producto</th>
+                    <td mat-cell *matCellDef="let element">{{ element.productName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="categoryName">
+                    <th mat-header-cell *matHeaderCellDef>Categoría</th>
+                    <td mat-cell *matCellDef="let element">{{ element.categoryName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="quantity">
+                    <th mat-header-cell *matHeaderCellDef>Existencias</th>
+                    <td mat-cell *matCellDef="let element">{{ element.quantity }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="unitPrice">
+                    <th mat-header-cell *matHeaderCellDef>Precio unitario</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ formatCurrency(element.unitPrice) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="totalValue">
+                    <th mat-header-cell *matHeaderCellDef>Valor total</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ formatCurrency(element.totalValue) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="movementCount">
+                    <th mat-header-cell *matHeaderCellDef>Movimientos</th>
+                    <td mat-cell *matCellDef="let element">{{ element.movementCount }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="topProductColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: topProductColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="panel">
+            <mat-card-header>
+              <mat-card-title>Comparativa visual</mat-card-title>
+              <mat-card-subtitle>
+                {{ metric() === 'MOVEMENT' ? 'Movimientos por producto' : 'Valor por producto' }}
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <app-bar-chart
+                [bars]="topProductBars()"
+                [valueFormatter]="metric() === 'MOVEMENT' ? formatNumber : formatCurrency"
+              />
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+
+    <!-- Stock bajo -->
+    <mat-tab label="Stock bajo">
+      <div class="tab-content">
+        @if (loading()) {
+          <div class="loading-state"><mat-spinner diameter="42"></mat-spinner></div>
+        } @else {
+          <mat-card class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Productos por debajo del mínimo</h3>
+                <p>{{ lowStock().length }} productos requieren reposición</p>
+              </div>
+              <button mat-stroked-button color="primary" (click)="exportLowStock()">
+                <mat-icon>download</mat-icon> Exportar CSV
+              </button>
+            </div>
+            <mat-card-content>
+              <div class="table-container">
+                <table mat-table [dataSource]="lowStock()">
+                  <ng-container matColumnDef="sku">
+                    <th mat-header-cell *matHeaderCellDef>SKU</th>
+                    <td mat-cell *matCellDef="let element">{{ element.sku }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="productName">
+                    <th mat-header-cell *matHeaderCellDef>Producto</th>
+                    <td mat-cell *matCellDef="let element">{{ element.productName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="categoryName">
+                    <th mat-header-cell *matHeaderCellDef>Categoría</th>
+                    <td mat-cell *matCellDef="let element">{{ element.categoryName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="quantity">
+                    <th mat-header-cell *matHeaderCellDef>Existencias</th>
+                    <td mat-cell *matCellDef="let element">{{ element.quantity }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="minStock">
+                    <th mat-header-cell *matHeaderCellDef>Mínimo</th>
+                    <td mat-cell *matCellDef="let element">{{ element.minStock }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="shortage">
+                    <th mat-header-cell *matHeaderCellDef>Faltante</th>
+                    <td mat-cell *matCellDef="let element">{{ element.shortage }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="coveragePercentage">
+                    <th mat-header-cell *matHeaderCellDef>Cobertura</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ element.coveragePercentage | number: '1.0-0' }}%
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="suggestedPurchaseValue">
+                    <th mat-header-cell *matHeaderCellDef>Costo de reposición</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ formatCurrency(element.suggestedPurchaseValue) }}
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="severity">
+                    <th mat-header-cell *matHeaderCellDef>Severidad</th>
+                    <td mat-cell *matCellDef="let element">
+                      <mat-chip-option
+                        [selectable]="false"
+                        [color]="element.severity === 'CRITICAL' ? 'warn' : element.severity === 'WARNING' ? 'accent' : 'primary'"
+                        selected
+                      >
+                        {{ severityLabel(element.severity) }}
+                      </mat-chip-option>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="lowStockColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: lowStockColumns;"></tr>
+                </table>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

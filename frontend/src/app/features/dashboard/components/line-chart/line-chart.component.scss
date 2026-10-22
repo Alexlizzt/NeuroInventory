@@ -1,0 +1,56 @@
+.line-chart {
+  width: 100%;
+}
+
+.line-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.grid-line {
+  stroke: #eceff1;
+  stroke-width: 1;
+}
+
+.axis-value {
+  font-size: 10px;
+  fill: #90a4ae;
+}
+
+.axis-label {
+  font-size: 10px;
+  fill: #78909c;
+}
+
+.data-point {
+  transition: r 0.15s ease-in-out;
+
+  &:hover {
+    r: 5px;
+  }
+}
+
+.chart-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: #546e7a;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}

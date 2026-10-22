@@ -1,0 +1,197 @@
+<div class="dashboard">
+  <header class="dashboard-header">
+    <div>
+      <h2>Panel de análisis</h2>
+      <p class="subtitle">
+        Resumen ejecutivo del inventario
+        @if (period(); as range) {
+          · {{ range.from }} → {{ range.to }}
+        }
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <mat-button-toggle-group
+        [value]="selectedDays()"
+        (change)="onPeriodChange($event.value)"
+        aria-label="Período de análisis"
+      >
+        @for (option of periodOptions; track option.days) {
+          <mat-button-toggle [value]="option.days">{{ option.label }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <button mat-icon-button color="primary" (click)="reload()" matTooltip="Actualizar datos">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Cargando indicadores…</p>
+    </div>
+  } @else {
+    @if (errorMessage(); as message) {
+      <div class="error-banner">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ message }}</span>
+      </div>
+    }
+
+    <section class="kpi-grid">
+      <app-kpi-card
+        label="Valor del inventario"
+        [value]="inventoryValueLabel()"
+        icon="payments"
+        [hint]="summary().totalUnits + ' unidades en stock'"
+        tone="primary"
+      />
+      <app-kpi-card
+        label="Productos activos"
+        [value]="summary().activeProducts"
+        icon="inventory_2"
+        [hint]="summary().totalProducts + ' productos registrados'"
+        tone="info"
+      />
+      <app-kpi-card
+        label="Categorías"
+        [value]="summary().totalCategories"
+        icon="category"
+        hint="Catálogo de categorías"
+        tone="primary"
+      />
+      <app-kpi-card
+        label="Stock bajo"
+        [value]="summary().lowStockProducts"
+        icon="warning"
+        [hint]="summary().outOfStockProducts + ' productos agotados'"
+        tone="warning"
+      />
+      <app-kpi-card
+        label="Entradas del período"
+        [value]="summary().inboundUnits"
+        icon="call_received"
+        [hint]="summary().inboundMovements + ' movimientos registrados'"
+        tone="success"
+      />
+      <app-kpi-card
+        label="Salidas del período"
+        [value]="summary().outboundUnits"
+        icon="call_made"
+        [hint]="summary().outboundMovements + ' movimientos registrados'"
+        tone="danger"
+      />
+    </section>
+
+    <section class="charts-grid">
+      <mat-card class="panel panel-wide">
+        <mat-card-header>
+          <mat-card-title>Flujo de movimientos</mat-card-title>
+          <mat-card-subtitle>Unidades de entrada y salida por período</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <app-line-chart
+            [labels]="timeseriesLabels()"
+            [series]="timeseriesSeries()"
+          />
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="panel">
+        <mat-card-header>
+          <mat-card-title>Valoración por categoría</mat-card-title>
+          <mat-card-subtitle>Distribución del valor del inventario</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <app-donut-chart
+            [segments]="categorySegments()"
+            centerLabel="Valor total"
+            [centerValueFormatter]="formatCurrency"
+            [legendValueFormatter]="formatCurrency"
+          />
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="panel">
+        <mat-card-header>
+          <mat-card-title>Productos con mayor valor</mat-card-title>
+          <mat-card-subtitle>Top 8 por valor en inventario</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <app-bar-chart [bars]="topProductBars()" />
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <section class="low-stock-section">
+      <mat-card class="panel">
+        <mat-card-header>
+          <mat-card-title>Alertas de stock</mat-card-title>
+          <mat-card-subtitle>Productos en o por debajo del stock mínimo</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-container">
+            <table mat-table [dataSource]="lowStock()">
+              <ng-container matColumnDef="sku">
+                <th mat-header-cell *matHeaderCellDef>SKU</th>
+                <td mat-cell *matCellDef="let element">{{ element.sku }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="productName">
+                <th mat-header-cell *matHeaderCellDef>Producto</th>
+                <td mat-cell *matCellDef="let element">{{ element.productName }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="categoryName">
+                <th mat-header-cell *matHeaderCellDef>Categoría</th>
+                <td mat-cell *matCellDef="let element">{{ element.categoryName }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="quantity">
+                <th mat-header-cell *matHeaderCellDef>Existencias</th>
+                <td mat-cell *matCellDef="let element">{{ element.quantity }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="minStock">
+                <th mat-header-cell *matHeaderCellDef>Mínimo</th>
+                <td mat-cell *matCellDef="let element">{{ element.minStock }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="shortage">
+                <th mat-header-cell *matHeaderCellDef>Faltante</th>
+                <td mat-cell *matCellDef="let element">{{ element.shortage }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="coveragePercentage">
+                <th mat-header-cell *matHeaderCellDef>Cobertura</th>
+                <td mat-cell *matCellDef="let element">{{ element.coveragePercentage | number: '1.0-0' }}%</td>
+              </ng-container>
+
+              <ng-container matColumnDef="severity">
+                <th mat-header-cell *matHeaderCellDef>Severidad</th>
+                <td mat-cell *matCellDef="let element">
+                  <mat-chip-option
+                    [selectable]="false"
+                    [color]="element.severity === 'CRITICAL' ? 'warn' : element.severity === 'WARNING' ? 'accent' : 'primary'"
+                    selected
+                  >
+                    {{ severityLabel(element.severity) }}
+                  </mat-chip-option>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="lowStockColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: lowStockColumns;"></tr>
+            </table>
+
+            @if (lowStock().length === 0) {
+              <p class="empty-state">No hay productos con stock bajo en este momento.</p>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+  }
+</div>

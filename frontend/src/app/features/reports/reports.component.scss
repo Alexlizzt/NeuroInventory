@@ -1,0 +1,170 @@
+.reports {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    color: #2c3e50;
+  }
+
+  .subtitle {
+    margin: 4px 0 0;
+    color: #78909c;
+    font-size: 13px;
+  }
+}
+
+.filters-panel {
+  mat-card-content {
+    padding-top: 16px;
+  }
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  align-items: center;
+
+  .filter-field {
+    width: 100%;
+  }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: #fdecea;
+  color: #c62828;
+}
+
+.reports-tabs {
+  overflow: hidden;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 0 8px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    border-radius: 10px;
+    background-color: #f5f7fa;
+    border-left: 4px solid #3f51b5;
+
+    &.warning {
+      border-left-color: #ff9800;
+    }
+
+    &.danger {
+      border-left-color: #f44336;
+    }
+  }
+
+  .summary-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #78909c;
+  }
+
+  .summary-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+}
+
+.panel {
+  overflow: hidden;
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 16px 16px 0;
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #2c3e50;
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: #90a4ae;
+    }
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+  }
+}
+
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .progress-bar {
+    flex: 1;
+    min-width: 70px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #eceff1;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background-color: #3f51b5;
+  }
+
+  span {
+    font-size: 12px;
+    color: #607d8b;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 900px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}

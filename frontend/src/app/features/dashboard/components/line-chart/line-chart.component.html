@@ -1,0 +1,50 @@
+<div class="line-chart">
+  <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="line-svg" role="img">
+    @for (grid of gridLines(); track grid.y) {
+      <line
+        [attr.x1]="padding.left"
+        [attr.x2]="width - padding.right"
+        [attr.y1]="grid.y"
+        [attr.y2]="grid.y"
+        class="grid-line"
+      />
+      <text [attr.x]="padding.left - 10" [attr.y]="grid.y + 4" text-anchor="end" class="axis-value">
+        {{ grid.label }}
+      </text>
+    }
+
+    @for (serie of renderedSeries(); track serie.name) {
+      <polyline
+        [attr.points]="serie.polyline"
+        fill="none"
+        [attr.stroke]="serie.color"
+        stroke-width="2.5"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+      />
+
+      @for (dot of serie.dots; track $index) {
+        <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="3.5" [attr.fill]="serie.color" class="data-point">
+          <title>{{ serie.name }} · {{ dot.label }}: {{ valueFormatter()(dot.value) }}</title>
+        </circle>
+      }
+    }
+
+    @for (label of axisLabels(); track label.x) {
+      <text [attr.x]="label.x" [attr.y]="height - 14" text-anchor="middle" class="axis-label">
+        {{ label.text }}
+      </text>
+    }
+  </svg>
+
+  @if (renderedSeries().length > 0) {
+    <ul class="chart-legend">
+      @for (serie of renderedSeries(); track serie.name) {
+        <li>
+          <span class="legend-dot" [style.background-color]="serie.color"></span>
+          {{ serie.name }}
+        </li>
+      }
+    </ul>
+  }
+</div>

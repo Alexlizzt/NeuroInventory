@@ -291,6 +291,80 @@ GET /api/v1/inventory-service/products/search/semantic?query=...&limit=5
 
 ---
 
+# API de Reportes
+
+El Inventory Service expone un recurso `/reports` con agregaciones analíticas del inventario.
+
+Todas las consultas son de solo lectura (`GET`), requieren rol `ROLE_ADMIN` o `ROLE_USER` y devuelven
+datos agregados calculados en PostgreSQL, sin exponer entidades de persistencia.
+
+```text
+GET /api/v1/inventory-service/reports/dashboard
+GET /api/v1/inventory-service/reports/valuation/categories
+GET /api/v1/inventory-service/reports/movements/timeseries
+GET /api/v1/inventory-service/reports/movements/detail
+GET /api/v1/inventory-service/reports/products/top
+GET /api/v1/inventory-service/reports/stock/low
+```
+
+## Parámetros
+
+| Endpoint                  | Parámetro     | Tipo      | Default  | Descripción                                              |
+| ------------------------- | ------------- | --------- | -------- | -------------------------------------------------------- |
+| `/reports/dashboard`      | `from`, `to`  | `DATE`    | 30 días  | Período analizado (UTC).                                |
+| `/reports/valuation/categories` | —        | —         | —        | Valoración actual del inventario por categoría.          |
+| `/reports/movements/timeseries` | `granularity` | `DAY \| WEEK \| MONTH` | `DAY` | Agrupación temporal. |
+| `/reports/movements/timeseries` | `from`, `to` | `DATE`  | 30 días  | Período analizado (UTC).                                |
+| `/reports/movements/detail` | `from`, `to` | `DATE`  | 30 días  | Período analizado (UTC).                                |
+| `/reports/movements/detail` | `type`      | `IN \| OUT \| ADJUSTMENT` | — | Filtra por tipo de movimiento.    |
+| `/reports/movements/detail` | `categoryId` | `UUID`    | —        | Filtra por categoría.                                   |
+| `/reports/movements/detail` | `limit`     | `Integer` | 50       | Cantidad máxima de registros.                           |
+| `/reports/products/top`   | `metric`      | `VALUE \| MOVEMENT` | `VALUE` | Criterio de ordenamiento.                 |
+| `/reports/products/top`   | `limit`       | `Integer` | 10       | Cantidad de productos.                                  |
+| `/reports/products/top`   | `from`, `to`  | `DATE`    | 30 días  | Período analizado (UTC).                                |
+| `/reports/stock/low`      | —             | —         | —        | Productos en o por debajo del stock mínimo.             |
+
+Cuando no se indica `from`/`to`, el período por defecto corresponde a los **últimos 30 días** en UTC.
+
+## Respuestas
+
+| Endpoint                       | Modelo                            | Descripción                                              |
+| ------------------------------ | --------------------------------- | -------------------------------------------------------- |
+| `/reports/dashboard`           | `DashboardSummaryResponse`        | KPIs del inventario y flujo de movimientos del período.  |
+| `/reports/valuation/categories`| `CategoryStockReportResponse[]`   | Unidades, valor, participación y stock bajo por categoría.|
+| `/reports/movements/timeseries`| `MovementPeriodReportResponse[]`  | Series agregadas por día, semana o mes.                  |
+| `/reports/movements/detail`    | `MovementDetailReportResponse[]`  | Kardex detallado con producto, categoría y motivo.       |
+| `/reports/products/top`        | `ProductValuationReportResponse[]`| Productos destacados por valor o por movimientos.        |
+| `/reports/stock/low`           | `LowStockReportResponse[]`        | Faltante, cobertura, severidad y costo de reposición.    |
+
+Ejemplo:
+
+```json
+{
+  "totalProducts": 42,
+  "activeProducts": 40,
+  "totalCategories": 6,
+  "totalUnits": 1284,
+  "lowStockProducts": 7,
+  "outOfStockProducts": 2,
+  "inventoryValue": 87450.35,
+  "inboundMovements": 31,
+  "outboundMovements": 24,
+  "inboundUnits": 620,
+  "outboundUnits": 415,
+  "netUnits": 205,
+  "periodStart": "2026-09-21T00:00:00Z",
+  "periodEnd": "2026-10-21T00:00:00Z",
+  "generatedAt": "2026-10-21T10:15:30Z"
+}
+```
+
+Los campos derivados (`percentage`, `severity`, `coveragePercentage`, `suggestedPurchaseValue`,
+`netUnits`) se calculan en la capa de aplicación a partir de los datos agregados, garantizando
+consistencia entre el dashboard y los reportes exportados.
+
+---
+
 # Documentación
 
 Cada servicio publicará su especificación OpenAPI.

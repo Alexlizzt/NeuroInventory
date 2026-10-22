@@ -1,0 +1,43 @@
+<div class="bar-chart">
+  <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" class="bar-svg" role="img">
+    <line
+      [attr.x1]="padding.left"
+      [attr.x2]="width - padding.right"
+      [attr.y1]="baselineY"
+      [attr.y2]="baselineY"
+      class="axis-line"
+    />
+
+    @for (bar of renderedBars(); track $index) {
+      <rect
+        [attr.x]="bar.x"
+        [attr.y]="bar.y"
+        [attr.width]="bar.width"
+        [attr.height]="bar.height"
+        rx="4"
+        [attr.fill]="bar.color"
+        class="bar"
+      >
+        <title>{{ bar.label }}: {{ valueFormatter()(bar.value) }}</title>
+      </rect>
+
+      <text
+        [attr.x]="bar.x + bar.width / 2"
+        [attr.y]="bar.y - 6"
+        text-anchor="middle"
+        class="bar-value"
+      >
+        {{ valueFormatter()(bar.value) }}
+      </text>
+
+      <text
+        [attr.x]="bar.x + bar.width / 2"
+        [attr.y]="baselineY + 18"
+        text-anchor="middle"
+        class="bar-label"
+      >
+        {{ bar.label }}
+      </text>
+    }
+  </svg>
+</div>

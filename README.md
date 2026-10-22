@@ -339,6 +339,8 @@ Tecnologías:
 Responsabilidades:
 
 - Dashboard de inventario.
+- Panel de análisis con KPIs y gráficos.
+- Reportes avanzados con filtros y exportación CSV.
 - Gestión CRUD.
 - Login con Keycloak.
 - Chat IA.

@@ -1,0 +1,50 @@
+<div class="donut-chart">
+  <svg viewBox="0 0 200 200" class="donut-svg" role="img" aria-label="Distribución por categoría">
+    <circle
+      cx="100"
+      cy="100"
+      [attr.r]="radius"
+      fill="none"
+      stroke="#eceff1"
+      [attr.stroke-width]="strokeWidth"
+    />
+
+    @for (arc of arcs(); track arc.label) {
+      <circle
+        cx="100"
+        cy="100"
+        [attr.r]="radius"
+        fill="none"
+        [attr.stroke]="arc.color"
+        [attr.stroke-width]="strokeWidth"
+        [attr.stroke-dasharray]="arc.dashArray"
+        [attr.stroke-dashoffset]="arc.dashOffset"
+        stroke-linecap="butt"
+        transform="rotate(-90 100 100)"
+        class="donut-segment"
+      >
+        <title>{{ arc.label }}: {{ legendValueFormatter()(arc.value) }}</title>
+      </circle>
+    }
+
+    @if (total() > 0) {
+      <text x="100" y="96" text-anchor="middle" class="donut-total">
+        {{ centerValueFormatter()(total()) }}
+      </text>
+      <text x="100" y="116" text-anchor="middle" class="donut-caption">{{ centerLabel() }}</text>
+    }
+  </svg>
+
+  <ul class="donut-legend">
+    @for (arc of arcs(); track arc.label) {
+      <li class="legend-item">
+        <span class="legend-dot" [style.background-color]="arc.color"></span>
+        <span class="legend-label" [title]="arc.label">{{ arc.label }}</span>
+        <span class="legend-value">{{ legendValueFormatter()(arc.value) }}</span>
+        <span class="legend-percentage">{{ arc.percentage | number: '1.0-1' }}%</span>
+      </li>
+    } @empty {
+      <li class="legend-empty">Sin datos para mostrar</li>
+    }
+  </ul>
+</div>

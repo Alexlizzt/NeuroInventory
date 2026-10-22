@@ -1,0 +1,80 @@
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  height: 100%;
+}
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.kpi-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #78909c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.kpi-hint {
+  font-size: 0.75rem;
+  color: #90a4ae;
+  margin-top: 2px;
+}
+
+.tone-primary .kpi-icon {
+  background-color: rgba(63, 81, 181, 0.12);
+  color: #3f51b5;
+}
+
+.tone-success .kpi-icon {
+  background-color: rgba(0, 150, 136, 0.12);
+  color: #009688;
+}
+
+.tone-warning .kpi-icon {
+  background-color: rgba(255, 152, 0, 0.14);
+  color: #f57c00;
+}
+
+.tone-danger .kpi-icon {
+  background-color: rgba(244, 67, 54, 0.12);
+  color: #e53935;
+}
+
+.tone-info .kpi-icon {
+  background-color: rgba(0, 172, 193, 0.12);
+  color: #0097a7;
+}

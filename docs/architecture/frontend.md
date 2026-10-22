@@ -31,17 +31,25 @@ La aplicación se organiza en módulos funcionales que representan capacidades d
 frontend/
 
 ├── core/
+│   ├── models/        # Tipados compartidos (incluye los modelos de reportes)
+│   ├── services/      # Clientes HTTP centralizados (Product, Report, etc.)
+│   └── utils/         # Utilidades reutilizables (exportación CSV)
 │
 ├── shared/
 │
 ├── features/
 │   ├── authentication/
-│   ├── dashboard/
+│   ├── dashboard/     # Panel de análisis con KPIs y gráficos SVG nativos
+│   │   └── components/
+│   │       ├── kpi-card/
+│   │       ├── donut-chart/
+│   │       ├── line-chart/
+│   │       └── bar-chart/
 │   ├── products/
 │   ├── categories/
 │   ├── inventory/
 │   ├── ai-assistant/
-│   └── reports/
+│   └── reports/       # Reportes avanzados con filtros y exportación CSV
 │
 ├── layout/
 │
@@ -97,6 +105,7 @@ Ejemplos:
 * ProductService
 * CategoryService
 * InventoryService
+* ReportService
 * AuthenticationService
 * AIService
 
@@ -237,8 +246,31 @@ Ejemplos:
 * Filtros de búsqueda.
 * Datos de una tabla.
 * Paginación.
+* Filtros y vistas del dashboard o de los reportes avanzados.
 
 Esta separación evita dependencias innecesarias entre módulos.
+
+---
+
+## Panel de Análisis y Reportes Avanzados
+
+La funcionalidad analítica se implementa siguiendo la organización feature-based:
+
+* **Dashboard** (`features/dashboard`): pantalla principal con KPIs del inventario, flujo de movimientos
+  por período, valoración por categoría, productos destacados y alertas de stock bajo. Los gráficos
+  (`donut-chart`, `line-chart`, `bar-chart`) están implementados con **SVG nativo**, sin dependencias
+  externas de visualización, y siguen el patrón de componentes standalone con signals.
+* **Reportes** (`features/reports`): interfaz tabulada con filtros avanzados (período, granularidad,
+  tipo de movimiento, categoría, métrica y límite), tablas de detalle y exportación a CSV mediante
+  `core/utils/csv-export.ts`, que neutraliza fórmulas para evitar inyección de código en hojas de cálculo.
+* **Servicios**: `ReportService` (`core/services`) centraliza las llamadas a `/reports/dashboard`,
+  `/reports/valuation/categories`, `/reports/movements/timeseries`, `/reports/movements/detail`,
+  `/reports/products/top` y `/reports/stock/low`.
+* **Modelos**: los tipos de respuesta se definen en `core/models/report.model.ts` reflejando los DTOs
+  expuestos por el backend.
+
+La navegación incorpora los accesos **Panel de análisis** y **Reportes** en la barra lateral, y la ruta
+por defecto de la aplicación pasa a ser `/dashboard`.
 
 ---
 
@@ -277,8 +309,6 @@ La arquitectura del frontend está preparada para incorporar nuevas funcionalida
 
 Entre las capacidades previstas se encuentran:
 
-* Paneles de análisis.
-* Reportes avanzados.
 * Gestión de múltiples almacenes.
 * Notificaciones en tiempo real.
 * Dashboards personalizados.

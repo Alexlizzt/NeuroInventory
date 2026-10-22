@@ -49,6 +49,8 @@ export class LayoutComponent implements OnInit {
 
   // Menú de navegación del dashboard
   navItems: NavItem[] = [
+    { label: 'Panel de análisis', icon: 'dashboard', route: '/dashboard' },
+    { label: 'Reportes', icon: 'assessment', route: '/reports' },
     { label: 'Productos', icon: 'inventory_2', route: '/products' },
     { label: 'Categorías', icon: 'category', route: '/categories' },
     { label: 'Movimientos', icon: 'swap_vert', route: '/inventory' },
