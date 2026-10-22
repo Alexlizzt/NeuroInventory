@@ -18,8 +18,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.alexlizzt.inventory_service.application.dto.response.CategoryResponse;
 import com.alexlizzt.inventory_service.application.query.PageResult;
-import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.GetCategoriesUseCase;
+import com.alexlizzt.inventory_service.domain.service.CreateCategoryService;
+import com.alexlizzt.inventory_service.domain.service.FindCategoryService;
+import com.alexlizzt.inventory_service.domain.service.GetCategoriesService;
+import com.alexlizzt.inventory_service.domain.service.UpdateCategoryService;
 
 @WebMvcTest(
     controllers = CategoryController.class,
@@ -34,10 +36,16 @@ class CategoryControllerWebTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CreateCategoryUseCase createCategoryUseCase;
+    private CreateCategoryService createCategoryService;
 
     @MockitoBean
-    private GetCategoriesUseCase listCategoriesUseCase;
+    private GetCategoriesService getCategoriesService;
+
+    @MockitoBean
+    private FindCategoryService findCategoryService;
+
+    @MockitoBean
+    private UpdateCategoryService updateCategoryService;
 
     @Test
     void shouldCreateCategoryAsAdmin() throws Exception {
@@ -49,7 +57,7 @@ class CategoryControllerWebTest {
                 "Productos electrónicos"
         );
 
-        when(createCategoryUseCase.execute(any()))
+        when(createCategoryService.execute(any()))
                 .thenReturn(response);
 
         String json = """
@@ -168,7 +176,7 @@ class CategoryControllerWebTest {
                 1
         );
 
-        when(listCategoriesUseCase.execute(any()))
+        when(getCategoriesService.execute(any()))
                 .thenReturn(pageResult);
 
         mockMvc.perform(
@@ -198,7 +206,7 @@ class CategoryControllerWebTest {
                 0
         );
 
-        when(listCategoriesUseCase.execute(any()))
+        when(getCategoriesService.execute(any()))
                 .thenReturn(pageResult);
 
         mockMvc.perform(

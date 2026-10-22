@@ -17,21 +17,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.alexlizzt.inventory_service.application.usecase.CreateCategoryUseCase;
-import com.alexlizzt.inventory_service.application.usecase.GetCategoriesUseCase;
 import com.alexlizzt.inventory_service.application.command.CreateCategoryCommand;
 import com.alexlizzt.inventory_service.application.dto.request.CreateCategoryRequest;
 import com.alexlizzt.inventory_service.application.dto.response.CategoryResponse;
 import com.alexlizzt.inventory_service.application.query.PageQuery;
 import com.alexlizzt.inventory_service.application.query.PageResult;
+import com.alexlizzt.inventory_service.domain.service.CreateCategoryService;
+import com.alexlizzt.inventory_service.domain.service.FindCategoryService;
+import com.alexlizzt.inventory_service.domain.service.GetCategoriesService;
+import com.alexlizzt.inventory_service.domain.service.UpdateCategoryService;
 
 
 @ExtendWith(MockitoExtension.class)
 class CategoryControllerTest {
 	@Mock
-	private CreateCategoryUseCase createCategoryUseCase;
+	private CreateCategoryService createCategoryService;
 	@Mock
-	private GetCategoriesUseCase listCategoriesUseCase;
+	private GetCategoriesService getCategoriesService;
+	@Mock
+	private FindCategoryService findCategoryService;
+	@Mock
+	private UpdateCategoryService updateCategoryService;
 
 	@InjectMocks
 	private CategoryController categoryController;
@@ -50,7 +56,7 @@ class CategoryControllerTest {
 				"Productos electrónicos"
 		);
 
-		when(createCategoryUseCase.execute(any(CreateCategoryCommand.class)))
+		when(createCategoryService.execute(any(CreateCategoryCommand.class)))
 				.thenReturn(expectedResponse);
 
 		// Act
@@ -62,7 +68,7 @@ class CategoryControllerTest {
 		assertNotNull(response.getBody());
 		assertEquals(expectedResponse, response.getBody());
 
-		verify(createCategoryUseCase).execute(any(CreateCategoryCommand.class));
+		verify(createCategoryService).execute(any(CreateCategoryCommand.class));
 	}
 
 
@@ -80,7 +86,7 @@ class CategoryControllerTest {
 				"Productos electrónicos"
 		);
 
-		when(createCategoryUseCase.execute(any(CreateCategoryCommand.class)))
+		when(createCategoryService.execute(any(CreateCategoryCommand.class)))
 				.thenReturn(expectedResponse);
 
 		// Act
@@ -90,7 +96,7 @@ class CategoryControllerTest {
 		ArgumentCaptor<CreateCategoryCommand> captor =
 				ArgumentCaptor.forClass(CreateCategoryCommand.class);
 
-		verify(createCategoryUseCase).execute(captor.capture());
+		verify(createCategoryService).execute(captor.capture());
 
 		CreateCategoryCommand command = captor.getValue();
 
@@ -122,7 +128,7 @@ class CategoryControllerTest {
 				1
 		);
 
-		when(listCategoriesUseCase.execute(any(PageQuery.class)))
+		when(getCategoriesService.execute(any(PageQuery.class)))
 				.thenReturn(expectedResult);
 
 		// Act
@@ -139,7 +145,7 @@ class CategoryControllerTest {
 		assertNotNull(response.getBody());
 		assertEquals(expectedResult, response.getBody());
 
-		verify(listCategoriesUseCase).execute(any(PageQuery.class));
+		verify(getCategoriesService).execute(any(PageQuery.class));
 	}
 	
 
@@ -154,7 +160,7 @@ class CategoryControllerTest {
 				0
 		);
 
-		when(listCategoriesUseCase.execute(any(PageQuery.class)))
+		when(getCategoriesService.execute(any(PageQuery.class)))
 				.thenReturn(expectedResult);
 
 		// Act
@@ -169,7 +175,7 @@ class CategoryControllerTest {
 		ArgumentCaptor<PageQuery> captor =
 				ArgumentCaptor.forClass(PageQuery.class);
 
-		verify(listCategoriesUseCase).execute(captor.capture());
+		verify(getCategoriesService).execute(captor.capture());
 
 		PageQuery query = captor.getValue();
 

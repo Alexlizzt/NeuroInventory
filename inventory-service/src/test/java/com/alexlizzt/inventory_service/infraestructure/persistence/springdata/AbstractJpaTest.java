@@ -9,15 +9,13 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import com.alexlizzt.inventory_service.infraestructure.persistence.springdata.InventoryReportJpaRepository;
+import com.alexlizzt.inventory_service.support.PostgresTestContainer;
 
 /**
  * Base de las pruebas de persistencia.
  *
- * El contenedor de PostgreSQL se arranca una única vez por JVM y permanece activo
- * durante toda la ejecución de la suite. Se gestiona de forma manual (en lugar de
- * delegar en la extensión de Testcontainers) para evitar que el contenedor se
- * detenga al finalizar la primera clase de pruebas y provoque fallos de conexión
- * en las clases siguientes.
+ * El contenedor de PostgreSQL lo gestiona {@link PostgresTestContainer}, que lo
+ * arranca una única vez por JVM y lo mantiene activo durante toda la suite.
  */
 @DataJpaTest(
         includeFilters = {
@@ -27,17 +25,9 @@ import com.alexlizzt.inventory_service.infraestructure.persistence.springdata.In
 @ActiveProfiles("test")
 public abstract class AbstractJpaTest {
 
-    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("inventory_test_db")
-            .withUsername("test_user")
-            .withPassword("test_password");
-
-    static {
-        postgres.start();
-    }
-
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
+        PostgreSQLContainer<?> postgres = PostgresTestContainer.instance();
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
