@@ -1,13 +1,18 @@
 # =============================================================================
-# Jenkins de CI para NeuroInventory
+# CI de NeuroInventory: Jenkins + SonarQube Community
 #
-# Es independiente de docker-compose.yml (la plataforma): solo levanta Jenkins
-# y reutiliza el daemon de Docker del host para Testcontainers y para construir
+# Es independiente de docker-compose.yml (la plataforma): solo levanta el CI y
+# reutiliza el daemon de Docker del host para Testcontainers y para construir
 # las imágenes de los servicios.
 #
 #   docker compose -f docker-compose.jenkins.yml up -d --build
 #
-# Acceso: http://localhost:8085  (credenciales en JENKINS_ADMIN_*)
+# Acceso:
+#   Jenkins   -> http://localhost:8085  (credenciales en JENKINS_ADMIN_*)
+#   SonarQube -> http://localhost:9000  (admin; la clave la fija sonar-init.sh)
+#
+# SonarQube necesita `vm.max_map_count >= 524288` en el host (ver
+# docs/development/sonarqube.md).
 # =============================================================================
 
 name: neuroinventory-jenkins
@@ -44,6 +49,11 @@ services:
       DOCKERHUB_USERNAME: "${DOCKERHUB_USERNAME:-neuroinventory}"
       DOCKERHUB_TOKEN: "${DOCKERHUB_TOKEN:-changeme}"
 
+      # Servidor SonarQube y credencial `sonarqube-token` (JCasC). El token se
+      # genera una sola vez con `scripts/sonar-init.sh`.
+      SONAR_URL: "http://sonarqube:9000"
+      SONAR_TOKEN: "${SONAR_TOKEN:-}"
+
       # Testcontainers: los contenedores se crean en el daemon del host y el
       # JVM de las pruebas los alcanza por el gateway de Docker.
       TESTCONTAINERS_HOST_OVERRIDE: "host.docker.internal"
@@ -67,5 +77,72 @@ services:
       retries: 20
       start_period: 90s
 
+  # ---------------------------------------------------------------------------
+  # SonarQube Community (calidad de código del monorepo)
+  # ---------------------------------------------------------------------------
+  sonar-db:
+    image: postgres:16-alpine
+    container_name: neuroinventory-sonar-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: "${SONAR_DB_NAME:-sonarqube}"
+      POSTGRES_USER: "${SONAR_DB_USER:-sonarqube}"
+      POSTGRES_PASSWORD: "${SONAR_DB_PASSWORD:-sonarqube}"
+
+    volumes:
+      - sonar_db:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SONAR_DB_USER:-sonarqube} -d ${SONAR_DB_NAME:-sonarqube}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: neuroinventory-sonarqube
+    restart: unless-stopped
+
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+
+    ports:
+      - "${SONAR_PORT:-9000}:9000"
+
+    environment:
+      # PostgreSQL propio: SonarQube no soporta su base de datos embebida en
+      # Docker para uso continuado.
+      SONAR_JDBC_URL: "jdbc:postgresql://sonar-db:5432/${SONAR_DB_NAME:-sonarqube}"
+      SONAR_JDBC_USERNAME: "${SONAR_DB_USER:-sonarqube}"
+      SONAR_JDBC_PASSWORD: "${SONAR_DB_PASSWORD:-sonarqube}"
+
+      # El host tiene 31 GB: se limita la JVM para no competir con Jenkins.
+      SONAR_WEB_JAVAOPTS: "-Xms256m -Xmx1g"
+      SONAR_CE_JAVAOPTS: "-Xms256m -Xmx2g"
+
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+
+    # Recomendado por SonarQube para el proceso de Elasticsearch.
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 120s
+
 volumes:
   jenkins_home:
+  sonar_db:
+  sonar_data:
+  sonar_extensions:
+  sonar_logs:

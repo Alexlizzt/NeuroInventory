@@ -34,6 +34,15 @@ unclassified:
     url: "${JENKINS_URL}"
     adminAddress: "ci@neuroinventory.local"
 
+  # Servidor SonarQube usado por `withSonarQubeEnv('SonarQube')` en el
+  # Jenkinsfile. La URL es la interna de la red de Compose.
+  sonarGlobalConfiguration:
+    buildWrapperEnabled: false
+    installations:
+      - name: "SonarQube"
+        serverUrl: "${SONAR_URL}"
+        credentialsId: "sonarqube-token"
+
 credentials:
   system:
     domainCredentials:
@@ -47,10 +56,18 @@ credentials:
               username: "${DOCKERHUB_USERNAME}"
               password: "${DOCKERHUB_TOKEN}"
 
+          # Token de análisis de SonarQube. Lo genera scripts/sonar-init.sh y
+          # se guarda en .env.jenkins como SONAR_TOKEN.
+          - string:
+              scope: GLOBAL
+              id: "sonarqube-token"
+              description: "SonarQube · token de análisis"
+              secret: "${SONAR_TOKEN}"
+
 jobs:
   - script: |
       pipelineJob('neuroinventory-ci') {
-        description('CI de NeuroInventory: pruebas de backend, build de frontend, tests de IA y construcción de imágenes Docker.')
+        description('CI de NeuroInventory: pruebas de backend, build de frontend, tests de IA, análisis de calidad con SonarQube y construcción de imágenes Docker.')
         triggers {
           scm('H/10 * * * *')
         }

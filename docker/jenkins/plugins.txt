@@ -10,3 +10,4 @@ ws-cleanup
 build-timeout
 credentials-binding
 docker-workflow
+sonar

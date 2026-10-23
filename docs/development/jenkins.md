@@ -2,8 +2,12 @@
 
 Jenkins para ejecutar la integración continua del monorepo sin depender de las
 herramientas instaladas en el host. Es **independiente** de
-`docker-compose.yml`: solo levanta Jenkins y reutiliza el daemon de Docker del
+`docker-compose.yml`: solo levanta el CI y reutiliza el daemon de Docker del
 host.
+
+El mismo `docker-compose.jenkins.yml` incluye **SonarQube Community** para
+revisar la calidad del código. Su guía está en
+[`docs/development/sonarqube.md`](sonarqube.md).
 
 ## Qué incluye
 
@@ -31,8 +35,10 @@ minutos. Después, la configuración se aplica sola:
 * Usuario administrador local (`JENKINS_ADMIN_ID` / `JENKINS_ADMIN_PASSWORD`).
 * Job **`neuroinventory-ci`** apuntando a `GIT_REPO_URL` (`Jenkinsfile`).
 * Credencial `dockerhub` para publicar imágenes.
+* Servidor SonarQube y credencial `sonarqube-token` (ver
+  [`sonarqube.md`](sonarqube.md) para generarla).
 
-Acceso: <http://localhost:8085>
+Acceso: <http://localhost:8085> · SonarQube: <http://localhost:9000>
 
 > El setup wizard está deshabilitado: el primer arranque ya queda configurado
 > por JCasC.
@@ -55,6 +61,8 @@ El [`Jenkinsfile`](../../Jenkinsfile) es declarativo y tiene estas etapas:
 | Frontend | `npm ci --legacy-peer-deps && npm run build` | `frontend/dist` archivado. |
 | AI Service | `pytest` | Resultados JUnit. |
 | MCP Server | `compileall` | Validación de sintaxis. |
+| SonarQube | `sonar-scanner-cli` | Análisis del monorepo en el servidor SonarQube. |
+| Quality gate | API de SonarQube | Estado informativo (opcionalmente bloqueante). |
 | Imágenes | `docker build` | Imágenes `neuroinventory/<servicio>:<tag>`. |
 | Publicar | `docker push` | Solo con `PUSH_IMAGES=true`. |
 
@@ -65,6 +73,8 @@ Parámetros del job:
 | `RUN_BACKEND_TESTS` | `true` | Pruebas de `inventory-service`. |
 | `RUN_FRONTEND_BUILD` | `true` | Instalación y build del frontend. |
 | `RUN_AI_TESTS` | `true` | Pruebas de `ai-service`. |
+| `RUN_SONAR_ANALYSIS` | `true` | Análisis de SonarQube y consulta del quality gate. |
+| `ENFORCE_QUALITY_GATE` | `false` | Falla el build si el gate no es `OK`. |
 | `BUILD_IMAGES` | `true` | Construye las cuatro imágenes. |
 | `PUSH_IMAGES` | `false` | Publica en Docker Hub. |
 | `IMAGE_TAG` | vacío | Si está vacío, `build-<número>`. |

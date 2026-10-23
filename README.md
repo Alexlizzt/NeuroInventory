@@ -396,6 +396,7 @@ Responsabilidades:
 | Docker         | Contenedores  |
 | Docker Compose | Entorno local |
 | Jenkins        | CI/CD         |
+| SonarQube      | Calidad       |
 
 ---
 
@@ -451,19 +452,23 @@ Incluye:
 
 ---
 
-# 🔁 Integración Continua (Jenkins)
+# 🔁 Integración Continua (Jenkins + SonarQube)
 
 El repositorio incluye un Jenkins aislado para ejecutar la pipeline completa
-(pruebas de backend con Testcontainers, build del frontend, tests de IA y
-construcción de imágenes):
+(pruebas de backend con Testcontainers, build del frontend, tests de IA,
+análisis de calidad y construcción de imágenes) junto a un **SonarQube
+Community** que revisa todo el monorepo:
 
 ```bash
 cp .env.jenkins.example .env.jenkins
 docker compose -f docker-compose.jenkins.yml --env-file .env.jenkins up -d --build
+./scripts/sonar-init.sh          # una sola vez: token + contraseña de admin
 ```
 
-Disponible en <http://localhost:8085> con el job `neuroinventory-ci` ya
-configurado. Guía completa: [`docs/development/jenkins.md`](docs/development/jenkins.md).
+Disponible en <http://localhost:8085> (job `neuroinventory-ci`) y
+<http://localhost:9000> (SonarQube). Guías completas:
+[`docs/development/jenkins.md`](docs/development/jenkins.md) y
+[`docs/development/sonarqube.md`](docs/development/sonarqube.md).
 
 ---
 

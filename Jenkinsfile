@@ -12,8 +12,9 @@
  *   3. Frontend  -> npm ci + build de producción
  *   4. AI        -> pytest del ai-service
  *   5. MCP       -> comprobación de sintaxis
- *   6. Imágenes  -> docker build de los cuatro servicios (opcional)
- *   7. Publicar  -> docker push a Docker Hub (opcional, requiere credencial)
+ *   6. SonarQube -> análisis del monorepo y consulta del quality gate
+ *   7. Imágenes  -> docker build de los cuatro servicios (opcional)
+ *   8. Publicar  -> docker push a Docker Hub (opcional, requiere credencial)
  */
 
 pipeline {
@@ -43,6 +44,16 @@ pipeline {
             name: 'RUN_AI_TESTS',
             defaultValue: true,
             description: 'Ejecuta las pruebas del ai-service (pytest).'
+        )
+        booleanParam(
+            name: 'RUN_SONAR_ANALYSIS',
+            defaultValue: true,
+            description: 'Ejecuta el análisis de SonarQube y consulta el quality gate.'
+        )
+        booleanParam(
+            name: 'ENFORCE_QUALITY_GATE',
+            defaultValue: false,
+            description: 'Falla el build si el quality gate de SonarQube no es OK. Por defecto solo informa.'
         )
         booleanParam(
             name: 'BUILD_IMAGES',
@@ -75,6 +86,14 @@ pipeline {
         TESTCONTAINERS_RYUK_DISABLED = 'true'
 
         DOCKERHUB_CREDENTIALS = 'dockerhub'
+
+        // SonarQube: servidor y credencial declarados en JCasC. El escáner se
+        // ejecuta en un contenedor hermano unido a la red de Compose.
+        SONAR_SERVER = 'SonarQube'
+        SONAR_SCANNER_IMAGE = 'sonarsource/sonar-scanner-cli:12.3'
+        SONAR_NETWORK = 'neuroinventory-jenkins_default'
+        SONAR_PROJECT_KEY = 'neuroinventory'
+        JENKINS_CONTAINER = 'neuroinventory-jenkins'
     }
 
     stages {
@@ -144,7 +163,8 @@ pipeline {
                         python -m pip install --quiet --upgrade pip
                         python -m pip install --quiet -r requirements.txt -r requirements-dev.txt
                         mkdir -p reports
-                        python -m pytest -q --junitxml=reports/junit.xml
+                        python -m pytest -q --junitxml=reports/junit.xml \
+                            --cov=app --cov-report=xml:reports/coverage.xml
                     '''
                 }
             }
@@ -161,6 +181,56 @@ pipeline {
                     // El módulo aún no tiene pruebas propias (solo tests/__init__.py):
                     // se valida que todo el código compile.
                     sh 'python3 -m compileall -q app main.py'
+                }
+            }
+        }
+
+        stage('SonarQube · análisis') {
+            when { expression { params.RUN_SONAR_ANALYSIS } }
+            steps {
+                // `withSonarQubeEnv` inyecta SONAR_HOST_URL y SONAR_AUTH_TOKEN
+                // desde el servidor configurado en JCasC.
+                withSonarQubeEnv(env.SONAR_SERVER) {
+                    sh '''
+                        set -e
+                        # El análisis de Java necesita las clases compiladas. Si
+                        # se desactivaron las pruebas del backend, se compilan
+                        # aquí para no analizar a medias.
+                        if [ ! -d inventory-service/build/classes/java/main ]; then
+                            (cd inventory-service && ./gradlew compileJava --no-daemon)
+                        fi
+                        # El escáner se ejecuta en un contenedor hermano del
+                        # daemon del host. --volumes-from monta el volumen de
+                        # Jenkins en la misma ruta para poder leer el workspace.
+                        docker run --rm --user root \
+                            --volumes-from "$JENKINS_CONTAINER" \
+                            --workdir "$WORKSPACE" \
+                            --network "$SONAR_NETWORK" \
+                            -e SONAR_HOST_URL="$SONAR_HOST_URL" \
+                            -e SONAR_TOKEN="$SONAR_AUTH_TOKEN" \
+                            "$SONAR_SCANNER_IMAGE"
+                    '''
+                }
+            }
+        }
+
+        stage('SonarQube · quality gate') {
+            when { expression { params.RUN_SONAR_ANALYSIS } }
+            steps {
+                withSonarQubeEnv(env.SONAR_SERVER) {
+                    script {
+                        // SonarQube rechaza webhooks hacia URLs internas, así
+                        // que se consulta el estado del gate por API.
+                        def gateStatus = sh(
+                            returnStdout: true,
+                            script: 'python3 scripts/sonar-quality-gate.py'
+                        ).trim()
+
+                        echo "Quality gate de SonarQube: ${gateStatus}"
+                        if (gateStatus != 'OK' && params.ENFORCE_QUALITY_GATE) {
+                            error("Quality gate ${gateStatus}. Revisa ${env.SONAR_HOST_URL}/dashboard?id=${env.SONAR_PROJECT_KEY}")
+                        }
+                    }
                 }
             }
         }
