@@ -16,5 +16,10 @@ bazel-out
 coverage
 *.log
 
+# Configuración local (nunca debe viajar en la imagen)
+.env
+.env.*
+*.md
+
 # Herramientas locales
 .kilo

@@ -10,8 +10,12 @@
 **/build
 **/.gradle
 **/.venv
+**/.pytest_cache
 **/__pycache__
 **/*.pyc
+**/reports
+**/.angular
+**/.coverage
 
 .env
 .env.jenkins

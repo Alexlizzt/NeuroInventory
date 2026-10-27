@@ -1,0 +1,22 @@
+# Entorno virtual y artefactos de Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Pruebas y reportes (no se necesitan en runtime)
+tests/
+reports/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+pytest.ini
+requirements-dev.txt
+
+# Documentación y configuración local
+*.md
+.env
+.env.*
+.git
+.gitignore

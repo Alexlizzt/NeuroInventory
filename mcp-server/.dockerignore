@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Pruebas, ejemplos y documentación (no se necesitan en runtime)
+tests/
+examples/
+*.md
+
+# Configuración local
+.env
+.env.*
+.git
+.gitignore
