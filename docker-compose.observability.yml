@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
 
   # ==========================================================================
@@ -7,11 +13,17 @@ services:
     environment:
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=ai-service
+    depends_on:
+      otel-collector:
+        condition: service_started
 
   mcp-server:
     environment:
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=mcp-server
+    depends_on:
+      otel-collector:
+        condition: service_started
 
   # ==========================================================================
   # Observabilidad - OpenTelemetry Collector
@@ -19,13 +31,15 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.110.0
     container_name: neuroinventory-otel-collector
+    restart: unless-stopped
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./observability/otel-collector/config.yaml:/etc/otel-collector-config.yaml
+      - ./observability/otel-collector/config.yaml:/etc/otel-collector-config.yaml:ro
     ports:
       - "4317:4317"   # OTLP gRPC
       - "4318:4318"   # OTLP HTTP
       - "8888:8888"   # Prometheus metrics del colector
+    logging: *default-logging
     networks:
       - neuroinventory-net
 
@@ -35,13 +49,15 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.27.0
     container_name: neuroinventory-alertmanager
+    restart: unless-stopped
     ports:
       - "9093:9093"
     volumes:
-      - ./observability/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./observability/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--web.listen-address=0.0.0.0:9093'
+    logging: *default-logging
     networks:
       - neuroinventory-net
 
@@ -51,18 +67,23 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     container_name: neuroinventory-prometheus
+    restart: unless-stopped
     ports:
-      - "9090:9090"
+      # 9090 ya lo usa Keycloak en docker-compose.yml.
+      - "${PROMETHEUS_PORT:-9091}:9090"
     volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./observability/prometheus/alerts.yml:/etc/prometheus/rules/alerts.yml
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/alerts.yml:/etc/prometheus/rules/alerts.yml:ro
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
       - '--web.listen-address=0.0.0.0:9090'
     depends_on:
       - alertmanager
+    stop_grace_period: 30s
+    logging: *default-logging
     networks:
       - neuroinventory-net
 
@@ -72,15 +93,17 @@ services:
   grafana:
     image: grafana/grafana:11.2.0
     container_name: neuroinventory-grafana
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    logging: *default-logging
     networks:
       - neuroinventory-net
 

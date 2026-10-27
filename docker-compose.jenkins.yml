@@ -17,6 +17,12 @@
 
 name: neuroinventory-jenkins
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   jenkins:
     build:
@@ -25,6 +31,8 @@ services:
     image: neuroinventory/jenkins:local
     container_name: neuroinventory-jenkins
     restart: unless-stopped
+    stop_grace_period: 30s
+    logging: *default-logging
 
     # El socket de Docker ya concede acceso root-equivalente al host, así que
     # ejecutar como root evita problemas de GID con el socket y con las cachés
@@ -84,6 +92,7 @@ services:
     image: postgres:16-alpine
     container_name: neuroinventory-sonar-db
     restart: unless-stopped
+    logging: *default-logging
 
     environment:
       POSTGRES_DB: "${SONAR_DB_NAME:-sonarqube}"
@@ -103,6 +112,8 @@ services:
     image: sonarqube:community
     container_name: neuroinventory-sonarqube
     restart: unless-stopped
+    stop_grace_period: 30s
+    logging: *default-logging
 
     depends_on:
       sonar-db:
