@@ -53,8 +53,13 @@ No necesitas generar nada aquí; los valores por defecto funcionan para desarrol
 |----------|-------------------|-------|
 | `OLLAMA_PORT` | `11434` | Puerto expuesto en localhost. |
 | `OLLAMA_HOST` | `http://ollama:11434` | URL interna del contenedor (usa este valor tal cual en Docker). |
+| `OLLAMA_VERSION` | `0.40.11` | Versión de la imagen oficial de Ollama. |
+| `LLM_MODEL` | `llama3.2` | Modelo de lenguaje a descargar. |
+| `EMBEDDING_MODEL` | `nomic-embed-text` | Modelo de embeddings a descargar. |
 
-Los modelos `llama3.2` y `nomic-embed-text` se descargan automáticamente durante el build del contenedor `ollama`.
+Los modelos se descargan la primera vez con el servicio `ollama-models` y quedan
+guardados en el volumen `ollama_data`. Los siguientes arranques los reutilizan y
+no vuelven a descargarlos.
 
 ### 2.4 AI Service (FastAPI)
 
@@ -152,6 +157,9 @@ KEYCLOAK_REALM=neuroinventory
 # ============================================================================
 OLLAMA_PORT=11434
 OLLAMA_HOST=http://ollama:11434
+OLLAMA_VERSION=0.40.11
+LLM_MODEL=llama3.2
+EMBEDDING_MODEL=nomic-embed-text
 
 # ============================================================================
 # AI Service
@@ -166,6 +174,11 @@ INTERNAL_API_KEY=neuroinventory-secret-key-2026
 # ============================================================================
 MCP_SERVER_PORT=8001
 SERVICE_TOKEN=
+
+# ============================================================================
+# Frontend
+# ============================================================================
+FRONTEND_PORT=4200
 
 # ============================================================================
 # Inventory Service
@@ -183,6 +196,12 @@ SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realm
 # ============================================================================
 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318
 OTEL_SERVICE_NAME=neuroinventory
+
+# Solo con docker-compose.observability.yml
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=admin
+PROMETHEUS_PORT=9091
+PROMETHEUS_RETENTION=15d
 ```
 
 ---
@@ -204,7 +223,7 @@ docker compose up --build
 | AI Service (API) | http://localhost:8000 |
 | MCP Server (SSE) | http://localhost:8001/sse |
 | Keycloak (admin) | http://localhost:9090 |
-| Prometheus | http://localhost:9090 |
+| Prometheus | http://localhost:9091 |
 | Grafana | http://localhost:3000 (admin / admin) |
 
 ---
@@ -213,7 +232,7 @@ docker compose up --build
 
 ```bash
 # Health checks
-curl http://localhost:8080/actuator/health          # Inventory Service
+curl http://localhost:8080/api/v1/inventory-service/actuator/health  # Inventory Service
 curl http://localhost:8000/health                    # AI Service
 curl http://localhost:8001/sse                       # MCP Server
 curl http://localhost:9090/realms/neuroinventory     # Keycloak
@@ -239,7 +258,7 @@ curl http://localhost:9090/realms/neuroinventory     # Keycloak
 | `keycloak-config-cli` no importa el realm | Espera a que Keycloak esté sano (`service_healthy`) y revisa logs: `docker compose logs keycloak-config-cli`. |
 | `mcp-server` no puede llamar a `inventory-service` | Verifica que `SERVICE_TOKEN` sea válido y no haya expirado. |
 | `inventory-service` rechaza el JWT | Confirma que `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` apunte al realm correcto. |
-| Ollama tarda mucho en arrancar | Es normal la primera vez: descarga `llama3.2` y `nomic-embed-text`. Revisa `docker compose logs ollama`. |
+| Ollama tarda mucho en arrancar | Es normal la primera vez: el servicio `ollama-models` descarga `llama3.2` y `nomic-embed-text` en el volumen `ollama_data`. Revisa `docker compose logs ollama-models`. |
 
 ---
 
@@ -259,4 +278,4 @@ docker compose -f docker-compose.yml -f docker-compose.observability.yml up --bu
 
 Luego accede a:
 - **Grafana**: http://localhost:3000 (admin / admin)
-- **Prometheus**: http://localhost:9090
+- **Prometheus**: http://localhost:9091

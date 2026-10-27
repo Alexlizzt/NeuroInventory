@@ -73,7 +73,7 @@ Más detalles en [`docs/architecture/deployment.md`](docs/architecture/deploymen
    | AI Service (API) | http://localhost:8000 |
    | Keycloak (admin) | http://localhost:9090 |
 
-> Nota: el primer arranque puede tardar, ya que el servicio `ollama` descarga los modelos `llama3.2` y `nomic-embed-text` durante el build.
+> Nota: el primer arranque puede tardar, ya que el servicio `ollama-models` descarga los modelos `llama3.2` y `nomic-embed-text` en el volumen `ollama_data`. Los arranques posteriores reutilizan los modelos y no vuelven a descargarlos.
 
 ---
 
@@ -397,6 +397,20 @@ Responsabilidades:
 | Docker Compose | Entorno local |
 | Jenkins        | CI/CD         |
 | SonarQube      | Calidad       |
+
+### Imágenes de producción
+
+Los Dockerfiles usan builds multi-stage y usuarios sin privilegios. El frontend
+mantiene `ng serve` para desarrollo (`docker compose`) y expone una imagen Nginx
+para producción:
+
+```bash
+docker build -t neuroinventory/frontend:prod ./frontend
+docker run --rm -p 4200:80 neuroinventory/frontend:prod
+```
+
+Los detalles de cada imagen, healthchecks y volúmenes están en
+[`docs/architecture/container.md`](docs/architecture/container.md).
 
 ---
 

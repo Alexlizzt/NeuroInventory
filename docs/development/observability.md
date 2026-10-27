@@ -43,7 +43,7 @@ docker compose -f docker-compose.yml -f docker-compose.observability.yml up --bu
 Esto levantará:
 - Todos los servicios base (postgres, keycloak, ollama, ai-service, inventory-service, mcp-server, frontend)
 - `otel-collector` en puertos `4317` (gRPC), `4318` (HTTP), `8888` (Prometheus)
-- `prometheus` en puerto `9090`
+- `prometheus` en puerto `9091` (el `9090` lo usa Keycloak)
 - `grafana` en puerto `3000`
 
 > Si ya tenías los servicios base levantados, solo levanta observabilidad:
@@ -58,7 +58,7 @@ Esto levantará:
 | Servicio | URL | Usuario / Contraseña |
 |----------|-----|----------------------|
 | Grafana | http://localhost:3000 | admin / admin |
-| Prometheus | http://localhost:9090 | — |
+| Prometheus | http://localhost:9091 | — |
 | OTLP Collector (traces) | http://localhost:4318 | — |
 | OTLP Collector (metrics) | http://localhost:8888 | — |
 
@@ -132,7 +132,7 @@ curl -s http://localhost:8080/api/v1/inventory-service/actuator/prometheus | hea
 curl -s http://localhost:8000/metrics | head -20
 
 # Prometheus targets
-curl -s http://localhost:9090/api/v1/targets
+curl -s http://localhost:9091/api/v1/targets
 ```
 
 ### Trazas están llegando al colector
@@ -177,13 +177,13 @@ Las reglas de alerta están definidas en `observability/prometheus/alerts.yml` y
 Desde la UI de Prometheus:
 
 ```
-http://localhost:9090/alerts
+http://localhost:9091/alerts
 ```
 
 O mediante API:
 
 ```bash
-curl -s http://localhost:9090/api/v1/rules | python3 -m json.tool
+curl -s http://localhost:9091/api/v1/rules | python3 -m json.tool
 ```
 
 ### Alertmanager
