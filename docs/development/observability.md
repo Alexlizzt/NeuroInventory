@@ -91,7 +91,10 @@ Estas variables se inyectan automáticamente en `inventory-service`, `ai-service
   - `ai_service_semantic_search_total` — búsquedas semánticas (por estado)
   - `ai_service_embedding_generation_total` — generación de embeddings (por estado)
   - `ai_service_http_request_duration_seconds` — duración de peticiones HTTP
-- Trazas automáticas de peticiones FastAPI mediante `FastAPIInstrumentor`.
+- Trazas automáticas de peticiones FastAPI mediante `FastAPIInstrumentor`. El
+  exportador OTLP solo se activa si `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` está
+  definido; sin esa variable (por ejemplo en Kubernetes sin colector) el servicio
+  no intenta enviar trazas y evita errores de conexión en los logs.
 
 ### frontend (Angular)
 

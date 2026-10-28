@@ -1,0 +1,89 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-init
+  labels:
+    app: postgres-init
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app: postgres-init
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init-databases
+          image: pgvector/pgvector:pg16
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+
+              until pg_isready -h postgres -U "$POSTGRES_USER" -d postgres; do
+                sleep 2
+              done
+
+              create_database() {
+                local db="$1"
+                if ! psql -h postgres -U "$POSTGRES_USER" -d postgres -tAc \
+                  "SELECT 1 FROM pg_database WHERE datname = '$db'" | grep -q 1; then
+                  psql -h postgres -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 \
+                    -c "CREATE DATABASE \"$db\""
+                fi
+              }
+
+              create_database "$POSTGRES_DB"
+              create_database "$KEYCLOAK_DB"
+
+              # El esquema lo gestiona este script solo la primera vez; después
+              # Flyway y el AI Service mantienen sus propias tablas.
+              if [ -z "$(psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                -tAc "SELECT to_regclass('public.products')")" ]; then
+                psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                  -v ON_ERROR_STOP=1 -f /scripts/db-init.sql
+              fi
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neuroinventory-secrets
+                  key: POSTGRES_PASSWORD
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neuroinventory-secrets
+                  key: POSTGRES_PASSWORD
+            - name: KEYCLOAK_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: KEYCLOAK_DB
+          volumeMounts:
+            - name: init-sql
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: init-sql
+          configMap:
+            name: postgres-init

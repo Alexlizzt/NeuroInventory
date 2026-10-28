@@ -49,12 +49,21 @@ HTTP_REQUEST_DURATION = Histogram(
 
 
 def configure_otel(app) -> None:
-    """Inicializa OpenTelemetry y instrumenta la aplicación FastAPI."""
-    otlp_endpoint = os.getenv(
-        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
-        "http://otel-collector:4318",
-    )
+    """Inicializa OpenTelemetry y instrumenta la aplicación FastAPI.
+
+    El exportador OTLP solo se activa si `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`
+    está definido. Así los entornos sin colector (por ejemplo Kubernetes sin el
+    stack de observabilidad) no generan reintentos ni errores en los logs.
+    """
+    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "").strip()
     service_name = os.getenv("OTEL_SERVICE_NAME", "ai-service")
+
+    if not otlp_endpoint:
+        logger.info(
+            "OpenTelemetry sin exportador OTLP: define "
+            "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT para enviar trazas."
+        )
+        return
 
     resource = Resource(attributes={"service.name": service_name})
 

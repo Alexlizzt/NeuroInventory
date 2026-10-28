@@ -5,6 +5,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 
 import { routes } from './app.routes';
 import { AuthService } from './core/auth/auth.service';
+import { loadRuntimeConfig } from './core/config/runtime-config';
 import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 
@@ -15,6 +16,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([jwtInterceptor, errorInterceptor])
     ),
+    // Carga config.json antes que cualquier servicio lea environment.
+    provideAppInitializer(() => loadRuntimeConfig()),
     // Inicializa Keycloak antes de renderizar la App
     provideAppInitializer(() => {
       const authService = inject(AuthService);

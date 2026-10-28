@@ -395,6 +395,7 @@ Responsabilidades:
 | -------------- | ------------- |
 | Docker         | Contenedores  |
 | Docker Compose | Entorno local |
+| Kubernetes     | Orquestación local (minikube) |
 | Jenkins        | CI/CD         |
 | SonarQube      | Calidad       |
 
@@ -411,6 +412,25 @@ docker run --rm -p 4200:80 neuroinventory/frontend:prod
 
 Los detalles de cada imagen, healthchecks y volúmenes están en
 [`docs/architecture/container.md`](docs/architecture/container.md).
+
+### Kubernetes (minikube)
+
+El stack también se puede desplegar en un clúster local con Ingress:
+
+```bash
+minikube start --memory=12288 --cpus=6   # recomendado para Ollama
+./scripts/k8s-up.sh
+```
+
+Añade los hosts que indica el script a `/etc/hosts` y accede a:
+
+- `http://neuroinventory.local` — frontend.
+- `http://neuroinventory.local/api/v1/inventory-service` — API.
+- `http://auth.neuroinventory.local` — Keycloak.
+
+Los manifiestos están en `deploy/k8s/` y la guía completa (arquitectura,
+operación, verificación y limitaciones) en
+[`docs/architecture/kubernetes.md`](docs/architecture/kubernetes.md).
 
 ---
 
@@ -536,7 +556,7 @@ Roadmap:
 ---
 
 ## Fase 5 — Infraestructura y Producción Avanzada
-- [ ] Despliegue en Kubernetes e Ingress.
+- [x] Despliegue en Kubernetes e Ingress.
 - [x] Observabilidad distribuida.
 
 ```mermaid
