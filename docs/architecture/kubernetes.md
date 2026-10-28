@@ -104,9 +104,30 @@ SKIP_HOSTS=1 ./scripts/k8s-up.sh
 | `http://auth.neuroinventory.local` | Keycloak |
 | `http://localhost:8001` (port-forward) | MCP Server |
 
-La API y el frontend comparten origen (`/api`), por lo que no hay CORS entre
-ambos. Keycloak vive en un host distinto para que el `issuer` de los tokens sea
-estable y coincida con el que valida `inventory-service`.
+La API y el frontend comparten origen (`/api`), por lo que **no hace falta CORS**
+entre ambos. Keycloak vive en un host distinto para que el `issuer` de los
+tokens sea estable y coincida con el que valida `inventory-service`; su cliente
+público usa `webOrigins: ["+"]`, que permite el origen del `redirectUri`.
+
+### Autenticación sobre HTTP local
+
+Este despliegue no usa TLS. Keycloak marca `AUTH_SESSION_ID` como `Secure` por
+usar `SameSite=None`, así que el realm define `sslRequired: "none"` para que la
+cookie de compatibilidad `_LEGACY` sí se guarde sobre HTTP. Sin ese ajuste el
+login termina en la página **"We are sorry"** con `cookie_not_found` en los
+logs de Keycloak.
+
+El frontend también necesita Web Crypto para PKCE. Los navegadores solo exponen
+`crypto.subtle` y `crypto.randomUUID` en contextos seguros (HTTPS o
+`localhost`), no en `http://neuroinventory.local`. Para que el flujo funcione:
+
+- Si el origen es seguro, `AuthService` usa PKCE `S256`.
+- Si es HTTP, polyfilla `crypto.randomUUID` con `crypto.getRandomValues` y
+  desactiva PKCE. El cliente de Keycloak acepta peticiones con y sin PKCE
+  (`pkce.code.challenge.method` vacío en `config/realm.json`).
+
+Para un entorno real, publica el Ingress con TLS y vuelve a exigir S256 y
+`sslRequired` estricto. El fallback solo existe para el desarrollo local.
 
 ## Despliegue
 
@@ -150,7 +171,10 @@ FRONTEND_HOST=inventario.local KEYCLOAK_HOST=auth.inventario.local ./scripts/k8s
 ```
 
 El realm de Keycloak se transforma en el script: el valor `localhost:4200` de
-`config/realm.json` se sustituye por `http://$FRONTEND_HOST`.
+`config/realm.json` se sustituye por `http://$FRONTEND_HOST`. El Ingress también
+se renderiza con esos nombres. Si cambias `app-config` o el Secret, el script
+reinicia Keycloak y los servicios de backend; si cambia `frontend-config`,
+reinicia el frontend. Así los pods no se quedan con variables antiguas.
 
 ## Configuración runtime del frontend
 
@@ -169,7 +193,10 @@ existe, mantiene los valores de desarrollo. En Kubernetes el ConfigMap
 ```
 
 Esto permite reutilizar la misma imagen sin recompilar el bundle al cambiar de
-entorno.
+entorno. El `config.json` de Kubernetes no incluye `tracingUrl`, por lo que el
+frontend no intenta exportar trazas a un colector OTLP que no está desplegado.
+En Compose, `frontend/public/config.json` sí lo define
+(`http://localhost:4318`).
 
 ## Operación
 
@@ -180,13 +207,20 @@ kubectl -n neuroinventory logs deploy/keycloak -f
 kubectl -n neuroinventory logs job/postgres-init
 kubectl -n neuroinventory describe pod -l app=inventory-service
 
-# Reaplicar cambios de manifiestos
-kubectl apply -k deploy/k8s
+# Reaplicar cambios de manifiestos (sustituye los hosts del Ingress)
+kubectl kustomize deploy/k8s \
+  | sed -e 's|__FRONTEND_HOST__|neuroinventory.local|g' \
+        -e 's|__KEYCLOAK_HOST__|auth.neuroinventory.local|g' \
+  | kubectl apply -f -
 
 # Volver a ejecutar la inicialización (idempotente)
 kubectl -n neuroinventory delete job postgres-init keycloak-config ollama-models
-kubectl apply -k deploy/k8s
+./scripts/k8s-up.sh
 ```
+
+El script es la vía recomendada: además de renderizar los hosts, recrea los
+Jobs, regenera los ConfigMaps/Secret y reinicia los servicios cuya configuración
+haya cambiado.
 
 Para eliminar el despliegue conservando los datos:
 
@@ -262,13 +296,18 @@ curl -s -H 'Host: neuroinventory.local' -H "Authorization: Bearer $TOKEN" \
 | `ImagePullBackOff` en las imágenes propias | Son imágenes locales sin registry: deben cargarse con el script. |
 | Los modelos de Ollama no aparecen | El Job `ollama-models` descarga en segundo plano; consulta `kubectl -n neuroinventory logs job/ollama-models`. |
 | El frontend usa `localhost` | El `config.json` del ConfigMap no se montó o hay caché del navegador. Comprueba `curl http://neuroinventory.local/config.json`. |
+| Página en blanco y en la consola `Web Crypto API is not available` | El navegador no considera seguro `http://neuroinventory.local` y no expone `crypto.subtle`/`crypto.randomUUID`. La imagen actual polyfilla `randomUUID` y desactiva PKCE sobre HTTP; si has modificado el frontend, vuelve a construirla con `./scripts/k8s-up.sh --build`. Para usar S256 en todo el flujo, sirve el Ingress por HTTPS. |
+| Tras el login aparece **"We are sorry"** | Keycloak no recibió su cookie de sesión. Comprueba que el Job `keycloak-config` importó `sslRequired: "none"` (`kubectl -n neuroinventory logs job/keycloak-config`) y que no estás mezclando `localhost` con `auth.neuroinventory.local`. |
+| `Invalid parameter: redirect_uri` o error CORS al volver de Keycloak | El `redirectUris` del cliente `frontend-client` debe incluir `http://neuroinventory.local/*`; el script lo genera desde `$FRONTEND_HOST`. Comprueba `curl -s http://neuroinventory.local/config.json` y vuelve a lanzar `./scripts/k8s-up.sh`. No hace falta CORS entre frontend y API porque comparten origen. |
+| Errores de red hacia `:4318` desde el frontend | El `config.json` incluye `tracingUrl` pero no hay colector OTLP. En Kubernetes se omite esa clave para desactivar el exportador; en Compose se mantiene `http://localhost:4318`. |
 
 ## Limitaciones
 
 Este despliegue está pensado para desarrollo local y demostración:
 
 - Un solo nodo, sin alta disponibilidad.
-- Sin TLS ni cert-manager.
+- Sin TLS ni cert-manager. El login HTTP funciona con el fallback de PKCE
+  descrito arriba; para producción hay que servir el Ingress por HTTPS.
 - Secretos creados desde `.env` como Secret de Kubernetes, sin cifrado en
   reposo ni integración con un gestor de secretos.
 - Imágenes cargadas localmente; no hay registry ni pipeline de despliegue.

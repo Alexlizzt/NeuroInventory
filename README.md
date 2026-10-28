@@ -431,6 +431,11 @@ El script añade los hosts automáticamente a `/etc/hosts`, y
 
 Si prefieres no tocar el fichero, usa `SKIP_HOSTS=1 ./scripts/k8s-up.sh`.
 
+> El entorno local no usa TLS. Para que el login funcione sobre HTTP, Keycloak
+> permite cookies no seguras (`sslRequired: none`) y el frontend desactiva PKCE
+> cuando el navegador no expone Web Crypto; sobre HTTPS se usa S256. Los detalles
+> están en la guía de Kubernetes.
+
 Los manifiestos están en `deploy/k8s/` y la guía completa (arquitectura,
 operación, verificación y limitaciones) en
 [`docs/architecture/kubernetes.md`](docs/architecture/kubernetes.md).

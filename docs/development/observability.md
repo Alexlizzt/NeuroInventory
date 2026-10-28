@@ -100,6 +100,9 @@ Estas variables se inyectan automáticamente en `inventory-service`, `ai-service
 
 - Trazas de navegación (DocumentLoad) y peticiones XHR/HttpClient enviadas al colector OTLP.
 - Inicializado en `frontend/src/main.ts` mediante `initTracing()`.
+- El exportador solo se activa si `config.json` define `tracingUrl`; en
+  Kubernetes se omite porque el colector no está desplegado, y el frontend no
+  genera errores de conexión hacia `:4318`.
 
 ### mcp-server
 
