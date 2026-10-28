@@ -8,7 +8,7 @@ spec:
   ingressClassName: nginx
   rules:
     # Frontend + API en el mismo origen (la API se sirve bajo /api).
-    - host: neuroinventory.local
+    - host: __FRONTEND_HOST__
       http:
         paths:
           - path: /api
@@ -26,7 +26,7 @@ spec:
                 port:
                   number: 80
     # Keycloak en su propio host para que el issuer de los tokens sea estable.
-    - host: auth.neuroinventory.local
+    - host: __KEYCLOAK_HOST__
       http:
         paths:
           - path: /

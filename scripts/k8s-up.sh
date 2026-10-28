@@ -124,6 +124,21 @@ done
 echo "==> Creando namespace y configuración"
 kubectl apply -f "$ROOT/deploy/k8s/namespace.yaml"
 
+# Se guarda el hash de la configuración anterior para reiniciar solo los
+# Deployments cuyas variables hayan cambiado (por ejemplo al cambiar de host).
+data_hash() {
+  local kind="$1" name="$2"
+
+  if kubectl -n "$NAMESPACE" get "$kind" "$name" >/dev/null 2>&1; then
+    kubectl -n "$NAMESPACE" get "$kind" "$name" -o jsonpath='{.data}' \
+      | sha256sum | cut -d' ' -f1
+  fi
+}
+
+OLD_APP_HASH="$(data_hash configmap app-config)"
+OLD_FRONTEND_HASH="$(data_hash configmap frontend-config)"
+OLD_SECRET_HASH="$(data_hash secret neuroinventory-secrets)"
+
 kubectl -n "$NAMESPACE" create configmap app-config \
   --from-literal=POSTGRES_DB="$POSTGRES_DB" \
   --from-literal=POSTGRES_USER="$POSTGRES_USER" \
@@ -184,6 +199,23 @@ kubectl -n "$NAMESPACE" create secret generic neuroinventory-secrets \
   --from-literal=SERVICE_TOKEN="$SERVICE_TOKEN" \
   --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 
+NEW_APP_HASH="$(data_hash configmap app-config)"
+NEW_FRONTEND_HASH="$(data_hash configmap frontend-config)"
+NEW_SECRET_HASH="$(data_hash secret neuroinventory-secrets)"
+
+BACKEND_CONFIG_CHANGED=0
+if [[ -n "$OLD_APP_HASH" && "$OLD_APP_HASH" != "$NEW_APP_HASH" ]]; then
+  BACKEND_CONFIG_CHANGED=1
+fi
+if [[ -n "$OLD_SECRET_HASH" && "$OLD_SECRET_HASH" != "$NEW_SECRET_HASH" ]]; then
+  BACKEND_CONFIG_CHANGED=1
+fi
+
+FRONTEND_CONFIG_CHANGED=0
+if [[ -n "$OLD_FRONTEND_HASH" && "$OLD_FRONTEND_HASH" != "$NEW_FRONTEND_HASH" ]]; then
+  FRONTEND_CONFIG_CHANGED=1
+fi
+
 # -----------------------------------------------------------------------------
 # Workloads
 # -----------------------------------------------------------------------------
@@ -200,7 +232,30 @@ echo "==> Aplicando manifiestos"
 # Los Jobs son inmutables: se recrean para volver a ejecutarlos.
 kubectl -n "$NAMESPACE" delete job keycloak-config ollama-models \
   --ignore-not-found=true >/dev/null
-kubectl apply -k "$ROOT/deploy/k8s"
+# Los hosts del Ingress se sustituyen aquí porque Kustomize no puede leer
+# variables de entorno.
+kubectl kustomize "$ROOT/deploy/k8s" \
+  | sed -e "s|__FRONTEND_HOST__|${FRONTEND_HOST}|g" \
+        -e "s|__KEYCLOAK_HOST__|${KEYCLOAK_HOST}|g" \
+  | kubectl apply -f -
+
+# Keycloak e inventory-service leen los hosts de app-config al arrancar; un
+# cambio en el ConfigMap no reinicia el pod por sí solo.
+if [[ "$BACKEND_CONFIG_CHANGED" == "1" ]]; then
+  echo "==> Configuración de backend cambiada: reiniciando servicios"
+  kubectl -n "$NAMESPACE" rollout restart deployment/keycloak >/dev/null
+  if [[ "$BUILD" != "1" ]]; then
+    kubectl -n "$NAMESPACE" rollout restart \
+      deployment/ai-service \
+      deployment/mcp-server \
+      deployment/inventory-service >/dev/null
+  fi
+fi
+
+if [[ "$FRONTEND_CONFIG_CHANGED" == "1" && "$BUILD" != "1" ]]; then
+  echo "==> Configuración del frontend cambiada: reiniciando frontend"
+  kubectl -n "$NAMESPACE" rollout restart deployment/frontend >/dev/null
+fi
 
 # Las imágenes mantienen el tag entre builds: sin reiniciar, los pods seguirían
 # ejecutando la versión anterior aunque el nodo ya tenga la nueva.
