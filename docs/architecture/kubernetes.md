@@ -79,10 +79,22 @@ rolling updates.
 
 ## Acceso
 
-Añade los hosts apuntando a la IP de minikube:
+`k8s-up.sh` añade automáticamente la entrada a `/etc/hosts` con la IP actual del
+clúster, y `k8s-down.sh` la elimina. El helper también se puede usar solo:
 
 ```bash
-echo "$(minikube ip) neuroinventory.local auth.neuroinventory.local" | sudo tee -a /etc/hosts
+./scripts/k8s-hosts.sh add      # añade o actualiza la entrada
+./scripts/k8s-hosts.sh remove   # la elimina
+./scripts/k8s-hosts.sh status   # muestra el estado actual
+```
+
+Escribe `/etc/hosts` a través del daemon de Docker (que corre como root), por lo
+que no pide contraseña; si Docker no está disponible recurre a `sudo`. Es
+idempotente: elimina entradas antiguas de esos nombres (por ejemplo si cambia la
+IP de minikube) y no duplica líneas. Para no tocar el fichero:
+
+```bash
+SKIP_HOSTS=1 ./scripts/k8s-up.sh
 ```
 
 | URL | Servicio |
@@ -113,7 +125,9 @@ El script:
    `keycloak-realm`) y el Secret `neuroinventory-secrets` a partir de `.env`.
 4. Despliega PostgreSQL, ejecuta el Job `postgres-init` y, cuando termina,
    aplica el resto de manifiestos.
-5. Espera a los rollouts y muestra la IP y los hosts que hay que añadir.
+5. Espera a los rollouts y añade la entrada a `/etc/hosts` (salvo
+   `SKIP_HOSTS=1`) con la IP y los nombres de host configurados.
+6. Muestra la IP y las URLs de acceso.
 
 Con `--build` se reconstruyen las cuatro imágenes propias, se recargan en el
 nodo y se reinician sus Deployments. Las imágenes conservan el tag `k8s`, así
@@ -185,6 +199,8 @@ Para borrar también los PVC, el namespace y los datos:
 ```bash
 ./scripts/k8s-down.sh --purge
 ```
+
+En ambos casos se elimina la entrada de `/etc/hosts` (salvo `SKIP_HOSTS=1`).
 
 ## Verificación
 

@@ -422,11 +422,14 @@ minikube start --memory=12288 --cpus=6   # recomendado para Ollama
 ./scripts/k8s-up.sh
 ```
 
-Añade los hosts que indica el script a `/etc/hosts` y accede a:
+El script añade los hosts automáticamente a `/etc/hosts`, y
+`./scripts/k8s-down.sh` los elimina. Accede a:
 
 - `http://neuroinventory.local` — frontend.
 - `http://neuroinventory.local/api/v1/inventory-service` — API.
 - `http://auth.neuroinventory.local` — Keycloak.
+
+Si prefieres no tocar el fichero, usa `SKIP_HOSTS=1 ./scripts/k8s-up.sh`.
 
 Los manifiestos están en `deploy/k8s/` y la guía completa (arquitectura,
 operación, verificación y limitaciones) en

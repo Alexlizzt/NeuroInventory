@@ -9,6 +9,7 @@
 #   FRONTEND_HOST=neuroinventory.local
 #   KEYCLOAK_HOST=auth.neuroinventory.local
 #   NAMESPACE=neuroinventory
+#   SKIP_HOSTS=1   # no modifica /etc/hosts
 # =============================================================================
 set -euo pipefail
 
@@ -224,12 +225,21 @@ kubectl -n "$NAMESPACE" rollout status deployment/frontend --timeout=300s
 
 MINIKUBE_IP="$(minikube ip)"
 
+if [[ "${SKIP_HOSTS:-0}" == "1" ]]; then
+  echo "==> SKIP_HOSTS=1: no se modifica /etc/hosts"
+else
+  echo "==> Configurando /etc/hosts"
+  FRONTEND_HOST="$FRONTEND_HOST" KEYCLOAK_HOST="$KEYCLOAK_HOST" \
+    "$ROOT/scripts/k8s-hosts.sh" add || \
+    echo "AVISO: añade la entrada manualmente: ${MINIKUBE_IP} ${FRONTEND_HOST} ${KEYCLOAK_HOST}"
+fi
+
 cat <<EOF
 
 ===============================================================================
 NeuroInventory desplegado en Kubernetes
 ===============================================================================
-Añade estas entradas a /etc/hosts (una sola vez):
+Entradas de /etc/hosts (se eliminan con ./scripts/k8s-down.sh):
 
   ${MINIKUBE_IP} ${FRONTEND_HOST} ${KEYCLOAK_HOST}
 
