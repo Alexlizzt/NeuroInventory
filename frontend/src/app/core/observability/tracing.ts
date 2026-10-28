@@ -7,13 +7,15 @@ import {
 } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-
-const OTLP_ENDPOINT =
-  typeof window !== 'undefined' && window.location
-    ? `${window.location.protocol}//${window.location.hostname}:4318`
-    : 'http://localhost:4318';
+import { environment } from '../../../environments/environment';
 
 export function initTracing(): void {
+  // Sin colector configurado no se registra el exportador: evita errores de
+  // red en Kubernetes, donde el stack de observabilidad no está desplegado.
+  if (!environment.tracingUrl) {
+    return;
+  }
+
   const provider = new WebTracerProvider({
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]: 'neuroinventory-frontend',
@@ -23,7 +25,7 @@ export function initTracing(): void {
 
   // Exportador OTLP hacia el colector (por HTTP)
   const otlpExporter = new OTLPTraceExporter({
-    url: `${OTLP_ENDPOINT}/v1/traces`,
+    url: `${environment.tracingUrl}/v1/traces`,
   });
 
   provider.addSpanProcessor(new BatchSpanProcessor(otlpExporter));

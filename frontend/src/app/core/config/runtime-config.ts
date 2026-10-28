@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
  */
 interface RuntimeConfig {
   apiUrl?: string;
+  tracingUrl?: string;
   keycloakUrl?: string;
   keycloakRealm?: string;
   keycloakClientId?: string;
@@ -30,6 +31,7 @@ export async function loadRuntimeConfig(): Promise<void> {
     if (config.apiUrl) {
       environment.apiUrl = config.apiUrl;
     }
+    environment.tracingUrl = config.tracingUrl || '';
     if (config.keycloakUrl) {
       environment.keycloak.url = config.keycloakUrl;
     }

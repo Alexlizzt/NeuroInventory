@@ -1,5 +1,6 @@
 {
   "apiUrl": "http://localhost:8080/api/v1/inventory-service",
+  "tracingUrl": "http://localhost:4318",
   "keycloakUrl": "http://localhost:9090",
   "keycloakRealm": "neuroinventory",
   "keycloakClientId": "frontend-client"
