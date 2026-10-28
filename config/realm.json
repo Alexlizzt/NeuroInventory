@@ -3,6 +3,7 @@
   "enabled": true,
   "registrationAllowed": true,
   "rememberMe": true,
+  "sslRequired": "none",
   "clients": [
     {
       "clientId": "frontend-client",
@@ -17,7 +18,7 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "attributes": {
-        "pkce.code.challenge.method": "S256"
+        "pkce.code.challenge.method": ""
       }
     },
     {
